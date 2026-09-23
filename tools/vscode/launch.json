@@ -1,0 +1,78 @@
+{
+    // FreeCAD 1.1 (pixi/conda 构建) 的 VSCode C++ 调试配置。
+    //
+    // 前提：已完成以下步骤（见 .vscode/tasks.json）：
+    //   1. pixi run configure-debug
+    //   2. pixi run build-debug
+    //   3. pixi run install-debug   <- 把 FreeCAD 安装进 .pixi 依赖环境
+    //
+    // 调试目标用的是“安装后”的 FreeCAD.exe（位于 conda 环境内，
+    // Qt/OCCT/Python 等 DLL 就在其旁边）。虽然 exe 装在 .pixi 里，
+    // 但其内嵌的 PDB 绝对路径指回 build/debug，源码断点照常生效。
+    // 改完代码后记得重新执行 build + install 再按 F5。
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "FreeCAD (GUI)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/.pixi/envs/default/Library/bin/FreeCAD.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "environment": [
+                {
+                    // 模拟 conda 环境激活：保证 python311.dll 等
+                    // （位于环境根目录而非 Library/bin）能被加载器找到
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.pixi/envs/default;${workspaceFolder}/.pixi/envs/default/Library/mingw-w64/bin;${workspaceFolder}/.pixi/envs/default/Library/bin;${workspaceFolder}/.pixi/envs/default/Library/lib;${env:PATH}"
+                }
+            ]
+        },
+        {
+            // 交互式：启动后出现 FreeCADCmd 的 >>> 提示符，可直接敲 Python。
+            // console 必须是 integratedTerminal，否则提示符收不到键盘输入。
+            "name": "FreeCADCmd (commandline)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/.pixi/envs/default/Library/bin/FreeCADCmd.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.pixi/envs/default;${workspaceFolder}/.pixi/envs/default/Library/mingw-w64/bin;${workspaceFolder}/.pixi/envs/default/Library/bin;${workspaceFolder}/.pixi/envs/default/Library/lib;${env:PATH}"
+                }
+            ]
+        },
+        {
+            // 脚本实验：在编辑器里打开 debug-labs/ 下的某个实验脚本、设好断点，
+            // 再 F5 选本配置。FreeCADCmd 会把当前文件当位置参数执行
+            // （Application::processCmdLineFiles → Interpreter().runFile）。
+            // 脚本里的 input() 检查点 = 回到 VS Code 设下一组断点的时机，
+            // 输入输出都在集成终端里进行。
+            "name": "FreeCADCmd 脚本实验 (运行当前文件)",
+            "type": "cppvsdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/.pixi/envs/default/Library/bin/FreeCADCmd.exe",
+            "args": ["${file}"],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "console": "integratedTerminal",
+            "environment": [
+                {
+                    "name": "PATH",
+                    "value": "${workspaceFolder}/.pixi/envs/default;${workspaceFolder}/.pixi/envs/default/Library/mingw-w64/bin;${workspaceFolder}/.pixi/envs/default/Library/bin;${workspaceFolder}/.pixi/envs/default/Library/lib;${env:PATH}"
+                }
+            ]
+        },
+        {
+            "name": "附加到运行中的 FreeCAD",
+            "type": "cppvsdbg",
+            "request": "attach",
+            "processId": "${command:pickProcess}"
+        }
+    ]
+}

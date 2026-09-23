@@ -1,0 +1,45 @@
+{
+    // FreeCAD (1.1) 官方 pixi 构建任务。
+    // 使用方法：Ctrl+Shift+P -> "Tasks: Run Task"，或 Ctrl+Shift+B 触发默认构建任务。
+    // 这些任务通过 pixi 运行，因此 conda 依赖环境（含 MSVC 工具链激活）会自动生效。
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "pixi: configure (debug)",
+            "detail": "初始化 git 子模块 + CMake 配置（Ninja, RelWithDebInfo）",
+            "type": "shell",
+            "command": "pixi",
+            "args": ["run", "configure-debug"],
+            "problemMatcher": []
+        },
+        {
+            "label": "pixi: build (debug)",
+            "detail": "编译到 build/debug（首次约 1 小时以上）",
+            "type": "shell",
+            "command": "pixi",
+            "args": ["run", "build-debug"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "pixi: install (debug)",
+            "detail": "编译并安装到 .pixi/envs/default/Library（调试用的就是这个安装结果）",
+            "type": "shell",
+            "command": "pixi",
+            "args": ["run", "install-debug"],
+            "dependsOn": "pixi: build (debug)",
+            "problemMatcher": []
+        },
+        {
+            "label": "pixi: run FreeCAD",
+            "detail": "在已激活的 pixi 环境中启动 FreeCAD（不走调试器）",
+            "type": "shell",
+            "command": "pixi",
+            "args": ["run", "freecad-debug"],
+            "problemMatcher": []
+        }
+    ]
+}

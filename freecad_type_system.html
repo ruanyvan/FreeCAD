@@ -1,0 +1,160 @@
+<html style="margin:0;padding:0;">
+<div style="background-color:transparent;box-sizing:border-box;font-family:'PingFang SC','Segoe UI',Roboto,Arial,sans-serif;padding:8px 4px;">
+
+  <!-- Title -->
+  <div style="text-align:center;margin-bottom:12px;">
+    <div style="font-size:15px;font-weight:600;color:#1A1B1C;">FreeCAD 类型系统全景图</div>
+    <div style="font-size:11px;color:#6B7280;margin-top:2px;">src/base + src/app 核心继承与注册体系</div>
+  </div>
+
+  <!-- Global Type Registry -->
+  <div style="display:flex;justify-content:center;margin-bottom:6px;">
+    <div style="background:linear-gradient(135deg,rgba(201,167,232,0.18),rgba(201,167,232,0.32));border:1px solid rgba(201,167,232,0.5);border-radius:10px;padding:8px 18px;text-align:center;min-width:260px;">
+      <div style="font-size:12px;font-weight:600;color:#6B4E9E;">Base::Type — 全局类型注册表</div>
+      <div style="font-size:10px;color:#6B7280;margin-top:2px;">typemap&lt;name,index&gt; + typedata&lt;TypeData&gt; · 仅 4 字节值类型</div>
+    </div>
+  </div>
+
+  <!-- Vertical connector -->
+  <div style="display:flex;justify-content:center;">
+    <div style="width:2px;height:14px;background:#C9A7E8;"></div>
+  </div>
+
+  <!-- Root: BaseClass -->
+  <div style="display:flex;justify-content:center;margin-bottom:4px;">
+    <div style="background:#fff;border:1.5px solid #9EACEA;border-radius:8px;padding:6px 16px;text-align:center;min-width:180px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div style="font-size:12px;font-weight:600;color:#1A1B1C;">Base::BaseClass</div>
+      <div style="font-size:10px;color:#6B7280;">类型系统根 · TYPESYSTEM_HEADER</div>
+    </div>
+  </div>
+
+  <div style="display:flex;justify-content:center;"><div style="width:2px;height:12px;background:#9EACEA;"></div></div>
+
+  <!-- Persistence -->
+  <div style="display:flex;justify-content:center;margin-bottom:4px;">
+    <div style="background:#fff;border:1.5px solid #9BBBF4;border-radius:8px;padding:6px 16px;text-align:center;min-width:200px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+      <div style="font-size:12px;font-weight:600;color:#1A1B1C;">Base::Persistence</div>
+      <div style="font-size:10px;color:#6B7280;">序列化基类 · Save/Restore</div>
+    </div>
+  </div>
+
+  <!-- Branch split -->
+  <div style="display:flex;justify-content:center;align-items:flex-start;gap:0;margin-top:0;">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+      <div style="width:2px;height:12px;background:#94D4D0;"></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;">
+      <div style="width:2px;height:12px;background:#A2DDAA;"></div>
+    </div>
+  </div>
+
+  <!-- Two main branches -->
+  <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap;">
+
+    <!-- LEFT: Property branch -->
+    <div style="flex:1;min-width:240px;display:flex;flex-direction:column;align-items:center;">
+      <div style="background:linear-gradient(135deg,rgba(148,212,208,0.15),rgba(148,212,208,0.28));border:1.5px solid #94D4D0;border-radius:8px;padding:6px 12px;text-align:center;width:100%;box-sizing:border-box;">
+        <div style="font-size:12px;font-weight:600;color:#1A1B1C;">App::Property</div>
+        <div style="font-size:10px;color:#6B7280;">所有属性的基类 · 状态位/信号/Undo</div>
+      </div>
+      <div style="width:2px;height:10px;background:#94D4D0;"></div>
+      <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
+        <div style="background:#fff;border:1px solid #94D4D0;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">PropertyLists</span> · 列表属性基类
+        </div>
+        <div style="background:#fff;border:1px solid #94D4D0;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">PropertyBool / Int / Float / String</span>
+          <span style="color:#6B7280;font-size:10px;"> (PropertyStandard)</span>
+        </div>
+        <div style="background:#fff;border:1px solid #94D4D0;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">PropertyLink / XLink / LinkSub</span>
+          <span style="color:#6B7280;font-size:10px;"> (PropertyLinks)</span>
+        </div>
+        <div style="background:#fff;border:1px solid #94D4D0;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">PropertyVector / Placement / Matrix</span>
+          <span style="color:#6B7280;font-size:10px;"> (PropertyGeo)</span>
+        </div>
+        <div style="background:#fff;border:1px solid #94D4D0;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">PropertyLength / Angle / Area…</span>
+          <span style="color:#6B7280;font-size:10px;"> (PropertyUnits · 60+ 量纲类型)</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: PropertyContainer branch -->
+    <div style="flex:1;min-width:240px;display:flex;flex-direction:column;align-items:center;">
+      <div style="background:linear-gradient(135deg,rgba(162,221,170,0.15),rgba(162,221,170,0.28));border:1.5px solid #A2DDAA;border-radius:8px;padding:6px 12px;text-align:center;width:100%;box-sizing:border-box;">
+        <div style="font-size:12px;font-weight:600;color:#1A1B1C;">App::PropertyContainer</div>
+        <div style="font-size:10px;color:#6B7280;">持有属性的对象基类 · 静态 PropertyData</div>
+      </div>
+      <div style="width:2px;height:10px;background:#A2DDAA;"></div>
+      <div style="background:#fff;border:1.5px solid #A2DDAA;border-radius:8px;padding:6px 12px;text-align:center;width:100%;box-sizing:border-box;">
+        <div style="font-size:12px;font-weight:600;color:#1A1B1C;">App::ExtensionContainer</div>
+        <div style="font-size:10px;color:#6B7280;">可挂载 Extension · map&lt;Type,Extension*&gt;</div>
+      </div>
+      <div style="width:2px;height:10px;background:#A2DDAA;"></div>
+      <div style="background:#fff;border:1.5px solid #A2DDAA;border-radius:8px;padding:6px 12px;text-align:center;width:100%;box-sizing:border-box;">
+        <div style="font-size:12px;font-weight:600;color:#1A1B1C;">App::TransactionalObject</div>
+        <div style="font-size:10px;color:#6B7280;">事务/Undo 支持</div>
+      </div>
+      <div style="width:2px;height:10px;background:#A2DDAA;"></div>
+      <div style="background:linear-gradient(135deg,rgba(162,221,170,0.2),rgba(162,221,170,0.35));border:1.5px solid #6BC47A;border-radius:8px;padding:6px 12px;text-align:center;width:100%;box-sizing:border-box;">
+        <div style="font-size:12px;font-weight:600;color:#1A1B1C;">App::DocumentObject</div>
+        <div style="font-size:10px;color:#6B7280;">文档对象基类 · DAG/Recompute/ViewProvider</div>
+      </div>
+      <div style="width:2px;height:10px;background:#6BC47A;"></div>
+      <div style="display:flex;flex-direction:column;gap:4px;width:100%;">
+        <div style="background:#fff;border:1px solid #6BC47A;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">App::GeoFeature</span> · 带 Placement
+        </div>
+        <div style="background:#fff;border:1px solid #6BC47A;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">App::FeaturePython</span> · Python 特征
+        </div>
+        <div style="background:#fff;border:1px solid #6BC47A;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">Part::Feature</span> · 模块中定义（Part 模块）
+        </div>
+        <div style="background:#fff;border:1px solid #6BC47A;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+          <span style="font-weight:600;">App::Document</span> · 文档本身也是容器
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extension parallel system -->
+  <div style="margin-top:14px;padding:10px 12px;background:rgba(228,227,221,0.3);border:1px dashed #B0AFA8;border-radius:10px;">
+    <div style="font-size:11px;font-weight:600;color:#1A1B1C;margin-bottom:6px;">⚡ 并行扩展类型系统（不继承 BaseClass）</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <div style="background:#fff;border:1.5px solid #E1B98F;border-radius:6px;padding:4px 10px;font-size:11px;">
+        <span style="font-weight:600;color:#1A1B1C;">App::Extension</span>
+        <span style="color:#6B7280;font-size:10px;"> · EXTENSION_TYPESYSTEM_HEADER</span>
+      </div>
+      <div style="font-size:14px;color:#E1B98F;">→</div>
+      <div style="background:#fff;border:1px solid #E1B98F;border-radius:6px;padding:4px 10px;font-size:11px;color:#1A1B1C;">
+        GroupExtension · LinkBaseExtension · OriginGroupExtension · GeoFeatureGroupExtension …
+      </div>
+    </div>
+    <div style="font-size:10px;color:#6B7280;margin-top:6px;">通过 ExtensionContainer::registerExtension(Type, Extension*) 挂载；可自带属性，参与序列化与属性查找。</div>
+  </div>
+
+  <!-- Key mechanisms -->
+  <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:140px;background:rgba(158,172,234,0.1);border-radius:8px;padding:8px 10px;">
+      <div style="font-size:11px;font-weight:600;color:#4A5A9A;">注册宏</div>
+      <div style="font-size:10px;color:#6B7280;margin-top:3px;line-height:1.5;">TYPESYSTEM_HEADER / SOURCE<br>PROPERTY_HEADER / SOURCE<br>EXTENSION_TYPESYSTEM_HEADER</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:rgba(148,212,208,0.1);border-radius:8px;padding:8px 10px;">
+      <div style="font-size:11px;font-weight:600;color:#3A8A86;">动态创建</div>
+      <div style="font-size:10px;color:#6B7280;margin-top:3px;line-height:1.5;">Type::createInstanceByName()<br>按类名工厂创建<br>自动加载所属模块</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:rgba(162,221,170,0.1);border-radius:8px;padding:8px 10px;">
+      <div style="font-size:11px;font-weight:600;color:#3A8A4A;">类型查询</div>
+      <div style="font-size:10px;color:#6B7280;margin-top:3px;line-height:1.5;">isDerivedFrom() / is&lt;T&gt;()<br>freecad_cast&lt;T&gt;()<br>getAllDerivedFrom()</div>
+    </div>
+    <div style="flex:1;min-width:140px;background:rgba(225,185,143,0.1);border-radius:8px;padding:8px 10px;">
+      <div style="font-size:11px;font-weight:600;color:#9A7A4A;">属性机制</div>
+      <div style="font-size:10px;color:#6B7280;margin-top:3px;line-height:1.5;">ADD_PROPERTY 宏<br>偏移量定位成员<br>动态属性运行时增删</div>
+    </div>
+  </div>
+
+</div>
+</html>
