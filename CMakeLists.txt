@@ -128,6 +128,12 @@ SetGlobalCompilerAndLinkerSettings()
 add_subdirectory(src)
 add_subdirectory(data)
 
+# ── C++ 调试实验驱动（学习用，见 debug-labs/README.md）─────────────────────
+option(FREECAD_BUILD_DEBUG_LABS "Build the FreeCADLabs C++ debug harness" ON)
+if(FREECAD_BUILD_DEBUG_LABS)
+    add_subdirectory(debug-labs)
+endif()
+
 BuildAndInstallDesignerPlugin()
 
 CreatePackagingTargets()

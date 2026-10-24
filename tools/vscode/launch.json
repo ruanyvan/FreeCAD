@@ -32,7 +32,7 @@
         {
             // 交互式：启动后出现 FreeCADCmd 的 >>> 提示符，可直接敲 Python。
             // console 必须是 integratedTerminal，否则提示符收不到键盘输入。
-            "name": "FreeCADCmd (commandline)",
+            "name": "FreeCADCmd(commandline)",
             "type": "cppvsdbg",
             "request": "launch",
             "program": "${workspaceFolder}/.pixi/envs/default/Library/bin/FreeCADCmd.exe",
@@ -48,23 +48,23 @@
             ]
         },
         {
-            // 脚本实验：在编辑器里打开 debug-labs/ 下的某个实验脚本、设好断点，
-            // 再 F5 选本配置。FreeCADCmd 会把当前文件当位置参数执行
-            // （Application::processCmdLineFiles → Interpreter().runFile）。
-            // 脚本里的 input() 检查点 = 回到 VS Code 设下一组断点的时机，
-            // 输入输出都在集成终端里进行。
-            "name": "FreeCADCmd 脚本实验 (运行当前文件)",
+            // C++ 原生驱动的调试实验（debug-labs/，实验全程不经过 Python）。
+            // 目标在 build/debug/bin；PATH 必须包含 Mod/Part——隐式链接的
+            // Part.pyd 靠它解析（上游 tests/CMakeLists.txt 注明模块测试在
+            // Windows 上正是缺这一步而无法运行）。
+            // 改动 LabsMain.cpp 后需重新 build（无需 install，直接跑构建产物）。
+            "name": "FreeCAD Labs (C++)",
             "type": "cppvsdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/.pixi/envs/default/Library/bin/FreeCADCmd.exe",
-            "args": ["${file}"],
+            "program": "${workspaceFolder}/build/debug/bin/FreeCADLabs.exe",
+            "args": [],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "console": "integratedTerminal",
             "environment": [
                 {
                     "name": "PATH",
-                    "value": "${workspaceFolder}/.pixi/envs/default;${workspaceFolder}/.pixi/envs/default/Library/mingw-w64/bin;${workspaceFolder}/.pixi/envs/default/Library/bin;${workspaceFolder}/.pixi/envs/default/Library/lib;${env:PATH}"
+                    "value": "${workspaceFolder}/build/debug/Mod/Part;${workspaceFolder}/build/debug/bin;${workspaceFolder}/.pixi/envs/default;${workspaceFolder}/.pixi/envs/default/Library/mingw-w64/bin;${workspaceFolder}/.pixi/envs/default/Library/bin;${workspaceFolder}/.pixi/envs/default/Library/lib;${env:PATH}"
                 }
             ]
         },
