@@ -316,6 +316,10 @@ int main(int argc, char* argv[])
 
     // 小数点与 FreeCADCmd 保持一致（照抄 src/Main/MainCmd.cpp 的初始化骨架）
     setlocale(LC_ALL, "");
+#ifdef _WIN32
+    // 窄字符串按 UTF-8 解读，与编译字符集和控制台编码保持一致。
+    setlocale(LC_CTYPE, ".UTF8");
+#endif
     setlocale(LC_NUMERIC, "C");
 
     App::Application::Config()["ExeName"] = "FreeCAD";
