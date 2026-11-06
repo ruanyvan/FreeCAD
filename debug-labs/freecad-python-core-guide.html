@@ -1,0 +1,1007 @@
+<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><link rel="icon" href="data:,"><meta name="viewport" content="width=device-width, initial-scale=1"><title>FreeCAD 解释器与原生对象 · 混合编程机制教材</title><meta name="description" content="从调试实验追踪解释器初始化、扩展模块导入、原生类型登记、对象包装与数据流转的完整教材。"><style>
+:root{--bg:#f6f4ee;--paper:#fffefa;--ink:#20372e;--muted:#637369;--line:#d6dfd2;--green:#255f47;--lime:#e5eddb;--accent:#ba733d;--blue:#275a79}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:100px}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.95 "Segoe UI","Microsoft YaHei",sans-serif}button,select,input{font:inherit}button,select{border:1px solid #b8c9b8;background:var(--paper);color:var(--green);border-radius:6px;padding:7px 12px;cursor:pointer}button:hover{background:var(--lime)}button:disabled{opacity:.4;cursor:default}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #d8a05e;outline-offset:3px}a{color:var(--blue);text-underline-offset:4px}code{font: .88em/1.75 Consolas,"Microsoft YaHei",monospace;overflow-wrap:anywhere}p>code,td>code{background:#e9eee3;padding:2px 4px;border-radius:3px}pre{white-space:pre;overflow:auto;background:#1d332d;color:#e5efdf;border-radius:8px;padding:21px 24px;font:13px/1.8 Consolas,"Microsoft YaHei",monospace;tab-size:4}pre code{font:inherit;overflow-wrap:normal}
+.top{position:sticky;top:0;z-index:10;background:#f6f4eef5;border-bottom:1px solid var(--line);backdrop-filter:blur(12px)}.bar{max-width:1240px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:12px 28px}.brand{font-size:14px;font-weight:700;letter-spacing:.08em}.actions{display:flex;gap:8px;align-items:center}.actions select{max-width:255px;font-size:13px}.actions button{font-size:13px}.progress{height:3px;width:0;background:var(--green)}main{max-width:1110px;margin:auto;padding:55px 40px 70px}.eyebrow{font-size:12px;letter-spacing:.18em;color:var(--green);font-weight:700}.hero{padding:16px 0 42px;border-bottom:1px solid var(--line)}h1{font-size:clamp(32px,4.5vw,54px);line-height:1.3;letter-spacing:-.03em;margin:22px 0}h1 span{color:var(--green)}.hero .lead{font-size:20px;max-width:850px;color:#4f6558;margin:20px 0}.meta{display:flex;flex-wrap:wrap;gap:8px;margin-top:26px}.meta span{font-size:12px;background:var(--lime);padding:4px 10px;border-radius:4px}.route{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:28px 0}.route a{display:block;text-decoration:none;padding:17px 18px;border:1px solid var(--line);border-radius:7px;background:var(--paper);color:var(--ink)}.route small{display:block;font-size:11px;color:var(--muted)}.route b{font-size:15px}
+.lesson{padding-top:58px;scroll-margin-top:90px}.chapter-no{color:var(--accent);font:13px Consolas,monospace;letter-spacing:.12em}h2{font-size:29px;line-height:1.4;margin:10px 0 14px}h3{font-size:20px;margin:30px 0 10px}.section-lead{font-size:17px;color:var(--muted);padding-bottom:18px;border-bottom:1px solid var(--line);margin-bottom:24px}p{margin:14px 0}.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}.three article{border:1px solid var(--line);border-top:3px solid var(--green);background:var(--paper);padding:22px}.three b{font-size:18px}.three p{font-size:14px}.note{border-left:4px solid var(--accent);background:#f0eadd;padding:16px 22px;margin:24px 0}.equation{background:var(--green);color:#fffbed;padding:20px 24px;border-radius:6px;font-size:17px;line-height:1.9;margin:25px 0}.table-wrap{overflow:auto;margin:24px 0;border:1px solid var(--line);border-radius:7px}table{width:100%;border-collapse:collapse;background:var(--paper);font-size:14px}th{text-align:left;background:#e7eddf;color:#31503f;font-weight:700}td,th{padding:13px 16px;border-bottom:1px solid var(--line);vertical-align:top}tr:last-child td{border-bottom:0}td:first-child{min-width:155px}td{overflow-wrap:anywhere}.source-btn{font-size:12px;padding:3px 9px;vertical-align:baseline;margin:3px 4px;white-space:normal}.source-btn::before{content:'↗ ';color:var(--accent)}.memory-diagram{display:grid;grid-template-columns:1fr 25px 1fr 25px 1fr;align-items:center;gap:10px;background:var(--paper);padding:24px;border:1px solid var(--line);border-radius:8px}.memory-diagram div{border:1px solid var(--line);padding:18px;min-height:175px;border-radius:5px}.memory-diagram b,.memory-diagram code{display:block}.memory-diagram p{font-size:13px}.memory-diagram span{text-align:center;color:var(--blue)}
+.walker{background:var(--paper);border:1px solid var(--line);border-radius:9px;padding:24px}.walker-head{display:flex;justify-content:space-between;gap:20px}.walker-head b{font-size:21px}.walker-head span{color:var(--muted);font:13px Consolas}.transport{display:flex;gap:20px;align-items:center;background:var(--green);color:white;padding:16px 20px;margin-top:18px;border-radius:6px}.transport span{font-size:12px;white-space:nowrap}.transport code{font-size:14px}.owner-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px;margin:20px 0}.owner-grid article{border:1px solid var(--line);border-top:3px solid var(--green);border-radius:4px;padding:15px}.owner-grid b{font-size:14px}.owner-grid pre{white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink);background:#edf2e8;padding:10px;font-size:12px;min-height:100px}.controls{display:flex;gap:9px;flex-wrap:wrap;border-top:1px solid var(--line);padding-top:20px;font-size:13px}.controls label{display:flex;gap:6px;align-items:center}.controls select{max-width:260px}.caption{font-size:12px;color:var(--muted)}.exercise{padding:7px 22px 20px;border:1px solid var(--line);border-radius:7px;background:var(--paper);margin:16px 0}.exercise h3{margin-top:15px}details{margin:16px 0;border:1px solid var(--line);background:var(--paper);border-radius:6px;padding:14px 18px}summary{cursor:pointer;font-weight:600;color:var(--green)}details p{font-size:14px}.exercise details{border:0;background:var(--lime)}.closing{font-size:19px;border-left:4px solid var(--green);padding:13px 22px;background:#e7eddf}.footer{margin-top:50px;padding-top:24px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+dialog{width:min(1100px,94vw);max-height:88vh;border:1px solid var(--line);border-radius:10px;padding:0;background:var(--paper);color:var(--ink);box-shadow:0 20px 90px #102b2866}dialog::backdrop{background:#18352ad0}.dialog-head{position:sticky;top:0;background:var(--paper);padding:16px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:16px}.dialog-head h3{font-size:19px;margin:0}.dialog-body{padding:20px 24px}.source-path{font:12px/1.8 Consolas,monospace;overflow-wrap:anywhere;color:var(--muted)}.source-lines{background:#1d332d;color:#e5efdf;overflow:auto;border-radius:7px;margin-top:16px;max-height:57vh;padding:15px 0}.source-line{display:flex;min-width:max-content;font:12px/1.9 Consolas,"Microsoft YaHei",monospace}.line-number{width:62px;flex-shrink:0;text-align:right;padding-right:17px;color:#8caa96;user-select:none}.line-code{white-space:pre;padding-right:25px}.search-input{width:100%;padding:12px;border:1px solid var(--line);border-radius:5px}.search-result{display:block;width:100%;text-align:left;margin:9px 0;padding:12px}.search-result small{display:block;color:var(--muted)}.copy-status{font-size:12px;color:var(--green)}.noscript{padding:18px;border:1px solid var(--accent)}
+@media(max-width:850px){main{padding:34px 22px}.bar{padding:10px 20px}.brand{display:none}.actions{width:100%;justify-content:space-between}.three{grid-template-columns:1fr}.memory-diagram{grid-template-columns:1fr}.memory-diagram span{transform:rotate(90deg)}.memory-diagram div{min-height:0}.route{grid-template-columns:1fr 1fr}.owner-grid{grid-template-columns:1fr}.owner-grid pre{min-height:0}.lesson{padding-top:42px}h2{font-size:25px}}
+@media(max-width:500px){body{font-size:15px}.bar{padding:8px 12px}.actions select{max-width:170px}.actions button{padding:6px 8px}main{padding:27px 16px}.hero .lead{font-size:17px}.route{gap:9px}.route a{padding:12px}.transport{display:block}.transport span{display:block}.walker{padding:16px}.controls select{max-width:210px}td,th{padding:10px}.dialog-head,.dialog-body{padding:15px}pre{padding:16px;font-size:12px}h3{font-size:18px}}
+@media print{.top,.route,.controls,.source-btn,dialog{display:none!important}body{background:white;font-size:10.5pt;color:black}main{max-width:none;padding:0}.hero{padding-top:0}h1{font-size:30pt}h2{font-size:19pt;break-after:avoid}h3{break-after:avoid}.lesson{padding-top:25px;break-before:auto}pre{white-space:pre-wrap;background:#eef1ec;color:black;overflow-wrap:anywhere}table{font-size:9pt}.table-wrap{overflow:visible}tr{break-inside:avoid}a{color:inherit}.three{grid-template-columns:1fr}.owner-grid{grid-template-columns:1fr}.walker{break-inside:avoid}.footer{font-size:9pt}}
+
+/* 仅作用于机制演示，正文的版式与内容保持原样。 */
+.mechanism-lab{--lab-blue:#377a9f;--lab-green:#367c5b;--lab-red:#ad5547;background:#fffefa;border:1px solid #ccd8c8;border-radius:14px;margin:24px 0;box-shadow:0 10px 40px #163e2510;overflow:hidden;line-height:1.6;color:#20372e}
+.mechanism-lab button,.mechanism-lab select{font-size:13px;line-height:1.5;min-height:36px}
+.lab-heading{display:flex;justify-content:space-between;align-items:center;gap:20px;padding:24px 25px 18px;background:#eef2e7}
+.lab-kicker{font-size:11px;letter-spacing:.12em;color:#61735f}
+.lab-heading h3{font-size:23px;margin:7px 0 0}
+.lab-tabs{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:#d3ddce;border-bottom:1px solid #d3ddce}
+.lab-tabs button{border:0;border-radius:0;padding:13px 8px;background:#f8faf4;color:#52634f;font-size:14px;font-weight:600;position:relative}
+.lab-tabs button[aria-selected=true]{background:#285d45;color:#fff}
+.lab-tabs button[aria-selected=true]:after{content:'';position:absolute;bottom:0;left:20%;width:60%;height:3px;background:#e9c486}
+.lab-intro{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 25px 14px}
+.lab-intro h4{font-size:18px;line-height:1.6;margin:0}
+.lab-intro p{font-size:13px;color:#65735f;margin:8px 0 0}
+.lab-status{font-size:11px;padding:5px 10px;background:#eaf0e3;color:#496247;border-radius:20px;white-space:nowrap}
+.lab-controls{display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding:7px 25px 15px}
+.lab-controls .lab-primary{background:#285d45;color:white;border-color:#285d45;min-width:115px}
+.lab-controls label{display:flex;align-items:center;gap:7px;font-size:12px;margin-left:6px}
+.lab-controls #lab-counter{margin-left:auto;color:#62755d;font:13px Consolas}
+.lab-timeline{display:flex;gap:7px;padding:0 25px 19px;overflow:auto}
+.lab-timeline button{flex:1;min-width:34px;min-height:28px;height:28px;padding:2px 6px;border-radius:4px;border:0;background:#eef0e9;color:#7b8872;font:11px Consolas}
+.lab-timeline button.done{background:#cddfc8;color:#315b3c}
+.lab-timeline button.selected{background:#c89450;color:#fff;box-shadow:0 0 0 2px #b67f3a30}
+.lab-visual{display:grid;grid-template-columns:minmax(0,1fr) 196px;border-top:1px solid #d7dfd1;border-bottom:1px solid #d7dfd1;background:#f6f8f1}
+.lab-map-wrap{min-width:0;overflow:auto}
+.lab-map-title{display:flex;justify-content:space-between;gap:15px;padding:12px 17px;font-size:11px;color:#60715a;background:#f2f5ed}
+.lab-legend{display:flex;align-items:center;gap:5px;white-space:nowrap}
+.lab-legend i{display:inline-block;width:7px;height:7px;border-radius:50%;background:#377a9f;margin-left:6px}
+.lab-legend i:nth-of-type(2){background:#367c5b}.lab-legend i:nth-of-type(3){background:#ad5547}
+#lab-map{display:block;width:100%;height:auto;min-width:670px;overflow:visible}
+.lab-node-bg{fill:#fffefa;stroke:#a8bda2;stroke-width:1.3;filter:drop-shadow(0 4px 5px #21452b0b)}
+.lab-node-stripe{fill:#598269}
+.lab-node.pending .lab-node-bg{fill:#f0f2ec;stroke:#b9c2b1;stroke-dasharray:5 5}
+.lab-node.pending .lab-node-stripe{fill:#b3bca9}
+.lab-node.dead{opacity:.55}
+.lab-node.dead .lab-node-bg{fill:#ecece7;stroke:#c9b6ab;stroke-dasharray:5 5}
+.lab-node.dead .lab-node-stripe,.lab-node.invalid .lab-node-stripe{fill:#b55b4d}
+.lab-node.invalid .lab-node-bg{fill:#fff4ef;stroke:#bd7362}
+.lab-node-title{fill:#284735;font:600 17px 'Microsoft YaHei','Segoe UI',sans-serif}
+.lab-node-code{fill:#63745c;font:12px Consolas,'Microsoft YaHei',sans-serif}
+.lab-divider{stroke:#e0e7da}
+.lab-field-label{fill:#687b61;font:12px 'Microsoft YaHei',sans-serif}
+.lab-field-value{fill:#244b35;font:14px Consolas,'Microsoft YaHei',sans-serif}
+.lab-field-flash{fill:#cbe5b9;animation:lab-write 1.1s ease-out}
+.lab-life-tag{fill:#dde3d6}.lab-life-text{fill:#6b775f;font:11px 'Microsoft YaHei',sans-serif}
+.lab-hit .lab-node-bg{stroke:#5a9a59;stroke-width:2.5}
+.lab-hit.invalid .lab-node-bg{stroke:#b55b4d}
+.lab-link{fill:none;stroke:#63836c;stroke-width:1.8;opacity:.7}
+.lab-link-label{font:12px 'Microsoft YaHei',sans-serif;fill:#496e52;paint-order:stroke;stroke:#f6f8f1;stroke-width:5px;stroke-linejoin:round}
+.lab-route{fill:none;stroke-width:3;stroke-dasharray:7 5}
+.lab-route.blue{stroke:#377a9f}.lab-route.green{stroke:#367c5b}.lab-route.red{stroke:#ad5547}
+.lab-packet.blue,.lab-packet-halo.blue{fill:#377a9f}.lab-packet.green,.lab-packet-halo.green{fill:#367c5b}.lab-packet.red,.lab-packet-halo.red{fill:#ad5547}
+.lab-packet-halo{opacity:.16}.lab-packet{stroke:#fff;stroke-width:2}
+.lab-packet-label-bg{fill:#244c3c;stroke:#fffefa;stroke-width:1.4}.lab-packet-label{fill:#fff9e8;font:12px Consolas,'Microsoft YaHei',sans-serif}
+.lab-dimension{fill:#3b5c43;font:12px Consolas}.lab-flight{padding:11px 15px;display:flex;gap:12px;align-items:center;border-top:1px solid #e0e6d9;background:#eaf0e2;min-height:48px}
+.lab-flight>span{font-size:10px;white-space:nowrap;background:#d5e3c9;border-radius:4px;padding:3px 7px}
+.lab-flight strong{font:12px/1.7 Consolas,'Microsoft YaHei';overflow-wrap:anywhere}
+.lab-stack{padding:16px 13px;border-left:1px solid #d4decf;background:#edf1e7;min-width:0}
+.lab-stack-head b{font-size:13px}.lab-stack-head small{display:block;font-size:10px;color:#6e7b64;margin:5px 0 17px}
+.lab-stack ol{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:6px}
+.lab-stack li{padding:9px 9px 9px 12px;border-left:2px solid #b7c9af;background:#f9fbf5;font:11px/1.65 Consolas,'Microsoft YaHei';overflow-wrap:anywhere}
+.lab-stack li.current{border-left:3px solid #356c49;background:#d5e4c9;color:#204c2f;animation:lab-frame .25s ease-out}
+.lab-stack-note{font-size:10px;line-height:1.8;color:#74816b;border-top:1px solid #d5ddcf;padding-top:16px;margin-top:18px}
+.lab-event{display:flex;gap:17px;padding:21px 25px;align-items:flex-start;min-height:125px}
+.lab-event>span{border-radius:4px;white-space:nowrap;background:#ead9bc;color:#79552f;padding:5px 9px;font-size:11px;margin-top:2px}
+.lab-event b{font-size:17px}.lab-event p{font-size:14px;line-height:1.9;color:#596b51;margin:7px 0 0}
+.lab-bottom{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);border-top:1px solid #d8e0d1}
+.lab-code{padding:18px 20px;min-width:0;background:#f5f7ef}
+.lab-code-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.lab-code-head b,.lab-journal>b{font-size:13px}
+.lab-code-head button{font-size:11px;min-height:28px;padding:4px 8px}
+#lab-code-path{font:10px/1.8 Consolas,'Microsoft YaHei';color:#6a795f;overflow-wrap:anywhere;margin:9px 0}
+#lab-code-lines{padding:13px 0;border-radius:6px;min-height:173px;max-height:205px;margin:0;white-space:pre;overflow:auto;font:11px/1.85 Consolas,'Microsoft YaHei'}
+#lab-code-lines:not(:has(.lab-code-line)){padding:15px;white-space:pre-wrap}
+.lab-code-line{display:flex;min-width:max-content;padding:0 10px 0 0}.lab-code-line i{width:40px;flex-shrink:0;text-align:right;padding-right:10px;font-style:normal;color:#91a68c}.lab-code-line.active{background:#426142;color:#fff5c9}
+.lab-journal{padding:21px 20px;background:#fffdf6;border-left:1px solid #d8e0d1}
+.lab-journal ol{padding-left:20px;font-size:12px;color:#647252;line-height:1.8;margin-bottom:0}
+.lab-journal li{padding:7px 0;border-bottom:1px solid #e6e9dc}.lab-journal li:last-child{color:#285537;font-weight:600;border:0}
+.lab-disclaimer{margin:0!important;padding:15px 23px;font-size:11px;color:#77806d;line-height:1.8;background:#f3f4ea}
+.lab-expanded{position:fixed;inset:16px;z-index:90;margin:0;overflow:auto;box-shadow:0 0 0 40px #122a22bb}
+.lab-expanded .lab-heading{position:sticky;top:0;z-index:4}
+.lab-expanded .lab-heading{padding:12px 24px}
+.lab-expanded .lab-heading h3{font-size:20px;margin-top:3px}
+.lab-expanded .lab-tabs{grid-template-columns:repeat(6,1fr)}
+.lab-expanded .lab-intro{padding:12px 25px 8px}
+.lab-expanded .lab-visual{grid-template-columns:minmax(0,1fr) 245px}
+.lab-expanded .lab-map-wrap{max-height:67vh}
+.lab-expanded #lab-map{max-height:50vh}
+.lab-open{overflow:hidden}
+@keyframes lab-write{from{fill:#efbd61}to{fill:#cbe5b9}}@keyframes lab-frame{from{opacity:.2;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:950px){.lab-visual{grid-template-columns:1fr}.lab-stack{border-left:0;border-top:1px solid #d4decf}.lab-stack ol{flex-direction:row;flex-wrap:wrap}.lab-stack li{flex:1;min-width:130px}.lab-stack-head small{display:inline;margin-left:10px}.lab-stack-note{margin-top:12px;padding-top:9px}.lab-expanded .lab-visual{grid-template-columns:1fr}.lab-bottom{grid-template-columns:1fr}.lab-journal{border-left:0;border-top:1px solid #d8e0d1}.lab-map-wrap:after{content:'窄屏可在图内横向滑动，或点击「放大演示」';display:block;font-size:10px;padding:5px 14px;color:#74816b}}
+@media(max-width:600px){.lab-heading{padding:17px;align-items:flex-start}.lab-heading h3{font-size:18px}.lab-kicker{font-size:10px}.lab-heading button{font-size:11px;white-space:nowrap}.lab-tabs button{font-size:12px;padding:12px 4px}.lab-intro{padding:18px 17px 12px;display:block}.lab-intro h4{font-size:16px}.lab-status{display:inline-block;margin-top:10px}.lab-controls{padding:5px 17px 12px;gap:6px}.lab-controls button{font-size:12px;padding:6px 9px}.lab-controls label{margin-left:0}.lab-timeline{padding:0 17px 15px;gap:5px}.lab-timeline button{min-width:30px}.lab-event{padding:18px 17px;gap:10px}.lab-event b{font-size:15px}.lab-event p{font-size:13px}.lab-code,.lab-journal{padding:16px}.lab-expanded{inset:5px}.lab-expanded #lab-map{max-height:none}.lab-expanded .lab-map-wrap{max-height:none}}
+@media(prefers-reduced-motion:reduce){.mechanism-lab *{animation:none!important;scroll-behavior:auto!important}}
+@media print{.lab-controls,.lab-timeline,.lab-heading>button{display:none}.lab-expanded{position:static}.lab-map-wrap{overflow:visible}#lab-map{min-width:0}.lab-visual{grid-template-columns:1fr}.lab-bottom{grid-template-columns:1fr}.mechanism-lab{break-inside:auto}.lab-tabs{grid-template-columns:repeat(3,1fr)}}
+
+
+</style></head><body>
+<header class="top"><div class="bar"><a class="brand" href="#top">底层机制研读 · 解释器与原生对象</a><div class="actions"><label><span class="caption">章节 </span><select id="chapter-jump" aria-label="跳转章节"><option value="answer">01 · 先回答你的三个问题</option><option value="baseline">02 · 阅读范围与实测基线</option><option value="memory">03 · 先把进程中的对象分开</option><option value="startup">04 · 解释器从无到有：启动顺序</option><option value="builtin">05 · 核心模块与扩展模块的两种入口</option><option value="import">06 · 逐层拆解你的调用链</option><option value="loader">07 · 从模块名字走到机器指令</option><option value="registration">08 · 类型登记：到底哪一行改了原生数据</option><option value="walk">09 · 交互推演：一次首次创建</option><option value="objects">10 · 脚本对象怎样指向原生对象</option><option value="property">11 · 一次尺寸赋值的数据全程</option><option value="abi">12 · 从对象布局到调用约定</option><option value="references">13 · 引用计数：管理的是引用责任</option><option value="calls">14 · 原生侧主动调用脚本：两条路线</option><option value="errors">15 · 异常如何穿过语言边界</option><option value="threads">16 · 线程状态与解释器锁</option><option value="lifetime">17 · 生命周期：有脚本引用不等于模型还活着</option><option value="callback">18 · 进阶：原生重算反过来执行脚本特征</option><option value="debug">19 · 把教材变成一次可重复的调试</option><option value="labs">20 · 从入门到熟练：六组验证练习</option><option value="troubleshoot">21 · 故障定位与工程边界</option><option value="evidence">22 · 本次验证记录与继续阅读</option></select></label><button id="search-open">查找内容</button><button id="print">打印</button></div></div><div class="progress" id="progress"></div></header>
+<main id="top"><div class="hero"><div class="eyebrow">从实验入口走进运行库</div><h1>解释器怎样接通<br><span>原生类型与模型数据</span></h1><p class="lead">围绕一次长方体创建，追踪解释器的建立、扩展模块的导入、工厂函数的登记，以及脚本与原生对象之间每一次明确的数据交接。</p><div class="meta"><span>基于当前工程源码</span><span>运行库 3.12.10</span><span>原生实验已实跑</span><span>源码内嵌 · 可脱机阅读</span></div></div>
+<nav class="route" aria-label="学习阶段"><a href="#startup"><small>第一阶段</small><b>解释器怎样建立</b></a><a href="#registration"><small>第二阶段</small><b>导入如何登记工厂</b></a><a href="#objects"><small>第三阶段</small><b>对象与属性怎样连接</b></a><a href="#debug"><small>第四阶段</small><b>用断点独立验证</b></a></nav>
+<noscript><p class="noscript">正文与练习可直接阅读；逐步演示、源码窗口及搜索需要启用浏览器脚本。</p></noscript>
+<section class="lesson" id="answer"><div class="chapter-no">01 / 22</div><h2>先回答你的三个问题</h2><div class="section-lead">跟随一次导入，找到真正写入原生类型表的那条语句。</div>
+<div class="three"><article><b>解释器在哪里建立？</b><p>主函数调用应用初始化，在配置初始化阶段进入 <code>Py_InitializeFromConfig</code>。场景零开始时，解释器已经存在。</p></article><article><b>模块怎样加载？</b><p>导入系统找到 <code>Part.pyd</code>，取得导出函数 <code>PyInit_Part</code> 的地址并调用。这个入口就是编译好的原生代码。</p></article><article><b>原生数据为何会改变？</b><p>模块入口调用 <code>Part::Box::init()</code>，最终由 <code>Type::createType</code> 直接修改当前进程的原生类型表。</p></article></div>
+<p>这里没有两个进程之间的通信，也没有把脚本类型表自动翻译成原生类型表。主程序、解释器动态库、零件扩展库都在同一进程内；各层交接的是函数调用、对象指针、字符串和明确的所有权责任。</p>
+<p>特别留意返回值：<code>PP_Load_Module</code> 返回模块对象指针；<code>loadModule</code> 成功返回真；<code>Type::importModule</code> 没有返回类型数据。真正让原生表改变的是导入过程中的初始化行为，不能在返回值里寻找一份“传回来的注册表”。<button type="button" class="source-btn" data-source="type">名字、模块与工厂</button> <button type="button" class="source-btn" data-source="load">持锁导入与异常转换</button> <button type="button" class="source-btn" data-source="partreg">原生特征类型登记</button></p>
+<div class="equation">字符串类型名 → 模块名 → 扩展库入口 → 类型登记 → 工厂函数指针 → 原生对象</div>
+</section><section class="lesson" id="baseline"><div class="chapter-no">02 / 22</div><h2>阅读范围与实测基线</h2><div class="section-lead">区分当前工程事实、运行观测和教学推演。</div>
+<p>本页依据当前提交 <code>95f7f66c935a0def0f0565518a7339731c797006</code>，核验日期为 <strong>2026 年 11 月 5 日</strong>。实验入口是 <code>debug-labs/cpp/LabsMain.cpp</code>。沿用参考教材的连续阅读和源码对照方式，专门讲解混合编程机制，没有左侧章节栏。</p>
+<div class="table-wrap"><table><thead><tr><th>项目</th><th>核验结果</th><th>调试时的意义</th></tr></thead><tbody><tr><td>实际启动配置</td><td><code>.vscode/launch.json</code> → <code>build/msvc-dev/bin/FreeCADLabs.exe</code></td><td>旧说明中的构建目录不适用于当前配置。</td></tr><tr><td>构建方式</td><td>带调试信息的发布配置；生成器为 Ninja</td><td>部分函数可能内联，变量可能被优化。</td></tr><tr><td>解释器版本</td><td>3.12.10，64 位；<code>python312.lib / python312.dll</code></td><td>按当前初始化分支讲解，底层源码固定到对应版本。</td></tr><tr><td>增量构建</td><td>已进入微软编译环境，成功构建原实验目标</td><td>未修改业务源码，未重新配置构建。</td></tr><tr><td>原生实验</td><td>自动模式完整结束；类型由未登记变为 <code>Part::Box</code></td><td>运行结果已验证，细分调用顺序由源码分析得到。</td></tr><tr><td>绑定验证</td><td>另用工程命令行程序验证模块、包装身份、量值与失效</td><td>它与原生实验是两个独立进程，不能拼成同一次执行。</td></tr></tbody></table></div>
+<p>图中的 <code>M、W、B、F</code> 是示意符号，代表模块、包装对象、业务对象和工厂函数，均非实际地址。源码按钮嵌入本次工程文件的原文，脱机也能查看。行号仅对应本次版本，工程更新后应先按函数名核对。</p>
+<div class="note">实验说明中的“全程不跑脚本”只能理解为场景由原生调用驱动。应用启动实际执行内嵌启动脚本，零件入口也会执行导入材质模块的语句。<button type="button" class="source-btn" data-source="appscript">运行启动脚本</button> <button type="button" class="source-btn" data-source="part">零件模块入口</button></div></section><section class="lesson" id="memory"><div class="chapter-no">03 / 22</div><h2>先把进程中的对象分开</h2><div class="section-lead">相同的“对象”二字，可能属于完全不同的管理层。</div>
+<div class="memory-diagram"><div><b>应用与模型</b><code>Document / Box</code><p>文档管理业务对象；属性持有尺寸与形状。</p></div><span>↔</span><div><b>绑定与包装</b><code>PrimitivePy</code><p>保存原生指针，通过函数槽转发操作。</p></div><span>↔</span><div><b>解释器运行库</b><code>PyInterpreterState</code><p>组织模块、命名空间、执行状态和异常。</p></div></div>
+<p><strong>解释器不是一个后台控制台窗口。</strong>它是链接进当前进程的运行库与状态。原生程序可以进入它的接口执行代码，再同步返回，不必启动独立的脚本进程，也不必打开交互终端。</p>
+<div class="table-wrap"><table><thead><tr><th>名称</th><th>真实含义</th><th>不要混淆</th></tr></thead><tbody><tr><td><code>InterpreterSingleton</code></td><td>工程的管理单例，构造时只把 <code>_global</code> 设为空</td><td>管理对象构造不等于运行库初始化。</td></tr><tr><td><code>PyInterpreterState</code></td><td>解释器上下文，模块与内置对象等状态归它管理</td><td>导入一个模块不等于新建一个解释器。</td></tr><tr><td><code>PyThreadState</code></td><td>关联解释器的线程执行状态</td><td><code>_global</code> 实际是这种指针，不是全局变量字典。</td></tr><tr><td><code>PyObject*</code></td><td>脚本对象的统一接口指针</td><td>不能把任意原生类指针强转成它。</td></tr><tr><td><code>PyTypeObject</code></td><td>脚本类型对象，包含属性访问、调用、析构等函数槽</td><td>与原生工厂的类型登记不同。</td></tr><tr><td><code>Base::Type</code></td><td>工程类型编号的轻量封装</td><td>编号索引到原生类型资料，不携带解释器。</td></tr></tbody></table></div><button type="button" class="source-btn" data-source="singleton">管理对象的创建</button> <button type="button" class="source-btn" data-source="gil">锁的作用域管理</button>
+<p>嵌入解释器解决“主程序如何调用脚本”；扩展模块解决“脚本如何调用原生能力”。本工程同时使用两者，所以一次调用可以从原生程序进入导入系统，再回到原生模块入口。<a href="https://docs.python.org/3.12/extending/embedding.html">官方嵌入说明</a>、<a href="https://docs.python.org/3.12/c-api/intro.html">接口总览</a>。</p></section><section class="lesson" id="startup"><div class="chapter-no">04 / 22</div><h2>解释器从无到有：启动顺序</h2><div class="section-lead">先登记入口，再建立运行库，最后准备应用可见的模块内容。</div><pre><code>LabsMain::main
+  App::Application::init(argc, argv)
+    initTypes()                         // 原生基础类型
+    initConfig(argc, argv)
+      PyImport_AppendInittab(&quot;FreeCAD&quot;, init_freecad_module)
+      PyImport_AppendInittab(&quot;__FreeCADBase__&quot;, init_freecad_base_module)
+      Base::Interpreter().init(argc, argv)
+        initInterpreter(argc, argv)
+          PyConfig_InitIsolatedConfig
+          PyConfig_SetBytesArgv
+          Py_InitializeFromConfig
+          PyConfig_Clear
+          Py_Initialize                // 已初始化时不再创建
+        PythonStdOutput::init_type
+        _global = PyEval_SaveThread()
+    initApplication()
+      new Application(...)
+        setupPythonTypes()
+      runString(CMakeVariables)
+      runString(FreeCADInit)
+  scene0_typeSystem()</code></pre>
+<h3>管理对象的创建与解释器的创建是两件事</h3>
+<p><code>Base::Interpreter()</code> 取得管理单例。真正的 <code>init()</code> 检查 <code>Py_IsInitialized()</code> 后，才决定是否初始化运行库。外部脚本进程已经建立运行库后再导入核心模块，会走复用已有解释器的分支；你的原生实验走的是自己建立解释器的路径。<button type="button" class="source-btn" data-source="appinit">应用初始化顺序</button> <button type="button" class="source-btn" data-source="config">解释器建立前的注册</button> <button type="button" class="source-btn" data-source="init">当前解释器初始化</button></p>
+<h3>初始化配置究竟控制什么</h3>
+<p>本版本先用隔离配置填入默认值，再显式把 <code>isolated</code> 改为零、用户安装目录开关设为一。不能只看函数名就说它完全隔离，也不能推断所有普通解释器默认值都恢复了。参数经配置接口传入，最终配置参与建立路径、标准模块与执行环境。<code>PyConfig_Clear</code> 释放配置资源，不会销毁解释器。</p>
+<p>运行库内部由 <code>Py_InitializeFromConfig</code> 组织运行时、核心和主环境初始化。核心流程创建解释器状态和首个线程状态，建立解释器锁，初始化基础对象、内置模块和导入系统；主环境阶段继续完成标准流和主模块等环境。“创建解释器”具体就是分配并连接这些原生状态。<a href="https://github.com/python/cpython/blob/v3.12.10/Python/pylifecycle.c#L1203">初始化入口</a>、<a href="https://github.com/python/cpython/blob/v3.12.10/Python/pylifecycle.c#L578">解释器与首线程</a>、<a href="https://docs.python.org/3.12/c-api/init_config.html">配置接口</a>。</p>
+<h3>为什么后面仍遇到初始化调用</h3>
+<p>初始化辅助函数末尾和 <code>PP_Init</code> 都会调用 <code>Py_Initialize</code>；已经初始化时这个兼容入口直接返回，不清空模块缓存，也不建立第二个解释器。要捕获首次创建，应在配置初始化处设断点。<button type="button" class="source-btn" data-source="pp">导入工具主路径</button></p>
+<p>初始化后，管理对象通过 <code>PyEval_SaveThread</code> 保存当前线程状态并释放解释器锁。之后包括主线程在内，操作脚本对象时都需要按工程约定重新持锁。</p>
+</section><section class="lesson" id="builtin"><div class="chapter-no">05 / 22</div><h2>核心模块与扩展模块的两种入口</h2><div class="section-lead">一个入口来自显式登记，另一个入口来自动态库导出符号。</div>
+<p><code>PyImport_AppendInittab</code> 登记“模块名 → 初始化函数指针”。它告诉导入系统以后怎样创建核心模块，尚未执行入口，更不是登记长方体。应用构造随后调用 <code>setupPythonTypes</code>，设置 <code>ApplicationMethods</code> 并导入核心模块，入口用 <code>PyModule_Create</code> 建立模块对象。<button type="button" class="source-btn" data-source="setup">核心模块入口</button> <button type="button" class="source-btn" data-source="setupapp">核心模块与包装类型</button></p>
+<div class="table-wrap"><table><thead><tr><th>登记位置</th><th>登记内容</th><th>什么时候发挥作用</th></tr></thead><tbody><tr><td>内置模块入口表</td><td><code>FreeCAD → init_freecad_module</code></td><td>解释器建立前登记，实际导入时调用。</td></tr><tr><td>模块方法表</td><td>方法名称、回调地址、参数约定</td><td>创建模块时成为脚本可调用对象。</td></tr><tr><td>原生类型表</td><td><code>Part::Box → 编号 → &amp;Part::Box::create</code></td><td>零件模块初始化时登记，创建模型时使用。</td></tr><tr><td>脚本模块字典</td><td><code>Part.Shape → 脚本类型对象</code></td><td>发布给脚本属性查询。</td></tr></tbody></table></div>
+<p>核心模块入口名称可以不是 <code>PyInit_FreeCAD</code>，因为函数地址已经显式登记。磁盘上的 <code>Part.pyd</code> 则需要按约定查找 <code>PyInit_Part</code>；工程宏 <code>PyMOD_INIT_FUNC(Part)</code> 正是生成这个导出入口。语言链接与导出声明确保运行库能按名称找到它。</p>
+<p>启动脚本会扫描模块目录、补充搜索路径并执行各目录的初始化脚本。扫描目录不代表已经导入每一个二进制扩展；本次场景零开始时，长方体仍未登记。<button type="button" class="source-btn" data-source="appscript">运行启动脚本</button> <button type="button" class="source-btn" data-source="paths">模块依赖目录配置</button></p>
+<div class="note">本实验链接了零件扩展库，系统可能在主函数运行前已映射该库。动态库映射、解释器调用模块入口、工程登记类型是三个不同动作。调试器模块列表出现零件库，不证明类型已经登记。</div></section><section class="lesson" id="import"><div class="chapter-no">06 / 22</div><h2>逐层拆解你的调用链</h2><div class="section-lead">每一层完成不同职责，返回值也承担不同含义。</div><div class="table-wrap"><table><thead><tr><th>层</th><th>主要动作</th><th>结果</th></tr></thead><tbody><tr><td><code>createInstanceByName</code></td><td>允许加载时先导入，再查类型、调用工厂</td><td>返回原生实例指针。</td></tr><tr><td><code>Type::importModule</code></td><td>从类型名前缀取模块名，跳过核心模块及已记录模块</td><td>成功后记录到 <code>loadModuleSet</code>。</td></tr><tr><td><code>loadModule</code></td><td>取得解释器锁，调用导入工具</td><td>成功返回真，失败抛原生异常。</td></tr><tr><td><code>PP_Load_Module</code></td><td>区分主模块、虚拟模块、重载和普通导入</td><td>普通成功路径返回借用模块指针。</td></tr><tr><td><code>PyImport_ImportModule</code></td><td>标准导入，使用缓存或查找并初始化模块</td><td>成功返回新引用；失败返回空并设置异常。</td></tr></tbody></table></div>
+<p>当前源码顺序是 <code>loadModule=true</code> 时先调用导入，再调用 <code>fromName</code>。集合让重复调用快速返回，但不能改述为“先查类型，缺失时才调用导入”。<button type="button" class="source-btn" data-source="type">名字、模块与工厂</button></p>
+<p>导入工具默认 <code>PP_RELOAD=0</code>。主模块走 <code>PyImport_AddModule</code>，这个接口只取得或建立模块容器，不执行同名文件。普通零件模块走真正的导入接口；取得新引用后在工具内部减去一次，依赖模块缓存继续持有对象，再把借用指针返回。这个包装函数改变了标准接口的引用合同。<button type="button" class="source-btn" data-source="pp">导入工具主路径</button> <button type="button" class="source-btn" data-source="load">持锁导入与异常转换</button></p>
+<p>原实验注释还有一处简化：当前 <code>Document::addObject</code> 实际调用 <code>getTypeIfDerivedFrom(..., true)</code>，校验继承关系后调用 <code>createInstance()</code>，并未直接调用 <code>createInstanceByName</code>。两条路线共用导入与工厂机制。<button type="button" class="source-btn" data-source="derived">文档类型校验入口</button> <button type="button" class="source-btn" data-source="docadd">文档创建原生对象</button></p>
+</section><section class="lesson" id="loader"><div class="chapter-no">07 / 22</div><h2>从模块名字走到机器指令</h2><div class="section-lead">关键跨越是拿到初始化函数地址并调用。</div>
+<p>本次实测模块来源是 <code>build/msvc-dev/Mod/Part/Part.pyd</code>，加载器类型为 <code>ExtensionFileLoader</code>。导入先受模块缓存影响；需要查找文件时，查找器、模块规格和加载器合作，根据路径及扩展名确定原生扩展。</p>
+<pre><code>PyImport_ImportModule(&quot;Part&quot;)
+  导入系统：缓存检查、查找器、模块规格、加载器
+    ExtensionFileLoader.create_module(spec)
+      _imp.create_dynamic(spec)
+        _PyImport_LoadDynamicModuleWithSpec(spec, ...)
+          _PyImport_FindSharedFuncptrWindows(&quot;PyInit&quot;, &quot;Part&quot;, 路径, ...)
+            LoadLibraryExW(扩展文件完整路径, ...)
+            GetProcAddress(库句柄, &quot;PyInit_Part&quot;)
+          _PyImport_InitFunc_TrampolineCall(入口指针)
+            PyInit_Part()                // 回到工程原生代码
+    ExtensionFileLoader.exec_module(module)
+      _imp.exec_dynamic(module)
+  返回模块对象的新引用</code></pre>
+<p>这份工程返回完整模块对象，属于传统单阶段初始化路线，主要注册发生在创建模块时调用入口的阶段。不能笼统地说扩展一定在执行阶段才注册，也不能把多阶段模块的执行槽套到这里。上图略去缓存、锁、审计和错误分支，表示首次普通导入的主路径。<a href="https://github.com/python/cpython/blob/v3.12.10/Lib/importlib/_bootstrap_external.py#L1188">扩展加载器</a>、<a href="https://github.com/python/cpython/blob/v3.12.10/Python/importdl.c#L85">入口调用</a>。</p>
+<p>系统装载器映射动态库、解析依赖；运行库再查导出函数。实验已原生链接零件库，装载同一库时通常复用映像；是否新映射不改变后续调用入口的必要性。<a href="https://github.com/python/cpython/blob/v3.12.10/Python/dynload_win.c#L200">动态装载实现</a>。</p>
+<div class="table-wrap"><table><thead><tr><th>查找层</th><th>查什么</th><th>排查方向</th></tr></thead><tbody><tr><td>脚本模块搜索</td><td><code>Part.pyd</code>、脚本文件或包</td><td>检查 <code>sys.path</code>、模块规格及来源。</td></tr><tr><td>系统动态库搜索</td><td>扩展依赖的解释器和几何内核等库</td><td>模块文件存在仍可能装载失败，要查依赖目录与二进制兼容性。</td></tr></tbody></table></div><p>启动配置的环境路径帮助主程序装载直接依赖；启动脚本也用 <code>os.add_dll_directory</code> 添加扩展依赖目录。两层搜索不能互相替代。<button type="button" class="source-btn" data-source="paths">模块依赖目录配置</button></p></section><section class="lesson" id="registration"><div class="chapter-no">08 / 22</div><h2>类型登记：到底哪一行改了原生数据</h2><div class="section-lead">注册的核心是名称、父类型、编号与创建函数地址。</div>
+<p>模块入口先导入材质依赖，建立模块对象、异常及脚本类型，随后登记原生特征。原始体登记在长方体之前，满足父类型必须存在的条件。<button type="button" class="source-btn" data-source="part">零件模块入口</button> <button type="button" class="source-btn" data-source="partreg">原生特征类型登记</button></p>
+<p>长方体使用 <code>PROPERTY_SOURCE(Part::Box, Part::Primitive)</code>。它包含原生类型系统宏，还连接属性元数据。下列是教学展开，省略其他声明，不是要求添加的实现：<button type="button" class="source-btn" data-source="propertymacro">长方体属性宏</button> <button type="button" class="source-btn" data-source="typemacro">原生工厂宏</button></p>
+<pre><code>// 工厂创建原生对象；登记时仅保存它的地址。
+void* Part::Box::create()
+{
+    return new Part::Box();
+}
+
+// 宏为本类型生成的登记流程。
+void Part::Box::init()
+{
+    // 1. 登记名称、继承关系与工厂。
+    initSubclass(classTypeId, &quot;Part::Box&quot;, &quot;Part::Primitive&quot;, &amp;Part::Box::create);
+    // 2. 连接父类属性元数据。
+    propertyData.parentPropertyData = Part::Primitive::getPropertyDataPtr();
+}</code></pre>
+<p><code>initSubclass</code> 核对尚未登记、查找父类型，再调用 <code>Type::createType</code>。后者用数组长度作为编号，把新 <code>TypeData</code> 放进 <code>typedata</code>，向 <code>typemap</code> 写入名称到编号的映射。返回的编号赋给类的静态类型成员。<button type="button" class="source-btn" data-source="subclass">写入类型表</button> <button type="button" class="source-btn" data-source="type">名字、模块与工厂</button></p>
+<div class="table-wrap"><table><thead><tr><th>位置</th><th>示意内容</th><th>作用</th></tr></thead><tbody><tr><td><code>typemap</code></td><td><code>"Part::Box" → k</code></td><td>名称转索引。</td></tr><tr><td><code>typedata[k]</code></td><td>名称、父类型、类型编号、<code>instMethod=F</code></td><td>提供继承判断与实例化入口。</td></tr><tr><td><code>classTypeId</code></td><td>类型编号 <code>k</code></td><td>类和实例查询工程类型。</td></tr><tr><td>工厂地址 <code>F</code></td><td><code>&amp;Part::Box::create</code></td><td>被调用时才执行构造。</td></tr></tbody></table></div>
+<p>登记不等于创建模型。导入返回后，工厂入口查询这张表并调用函数指针，才进入长方体构造函数。场景零的临时对象没有加入文档，随后被删除；场景一的对象交给文档管理。<button type="button" class="source-btn" data-source="box">长方体构造与执行</button> <button type="button" class="source-btn" data-source="docadd">文档创建原生对象</button></p>
+<p>这张表属于基础库，零件扩展通过链接的基础接口调用同一个登记函数。原生数据由原生代码直接修改，解释器只是触发了模块初始化。把基础实现错误地静态复制进多个扩展可能造成多份全局表，但那不是当前工程的正常架构。</p>
+</section><section class="lesson" id="walk"><div class="chapter-no">09 / 22</div><h2>交互推演：一次首次创建</h2><div class="section-lead">逐步观察调用、传参，以及本步骤改变的持有者。</div>
+<p>这是按源码整理的教学推演，不是实时调试器。地址均为符号示意。先观察当前动作，再去本步源码设断点。</p>
+<div id="mechanism-lab" class="mechanism-lab">
+  <div class="lab-heading"><div><span class="lab-kicker">跟随一次调用，看到数据落在哪里</span><h3>六个机制，一步一步演给你看</h3></div><button id="lab-expand" type="button">放大演示</button></div>
+  <div class="lab-tabs" role="tablist" aria-label="机制演示场景"></div>
+  <div class="lab-intro"><div><h4 id="lab-title"></h4><p id="lab-question"></p></div><div class="lab-status" id="lab-status" role="status">等待播放</div></div>
+  <div class="lab-controls">
+    <button id="lab-play" class="lab-primary" type="button">▶ 播放过程</button>
+    <button id="lab-prev" type="button" aria-label="退回上一步">← 上一步</button>
+    <button id="lab-next" type="button" aria-label="演示下一步">下一步 →</button>
+    <button id="lab-reset" type="button">重新开始</button>
+    <label>速度 <select id="lab-speed" aria-label="播放速度"><option value="0.65">慢速</option><option value="1" selected>正常</option><option value="1.65">快速</option></select></label>
+    <span id="lab-counter"></span>
+  </div>
+  <div class="lab-timeline" aria-label="选择过程中的事件"></div>
+  <div class="lab-visual">
+    <div class="lab-map-wrap"><div class="lab-map-title"><span>同一进程内的数据与调用</span><span class="lab-legend"><i></i>传递 <i></i>写入 <i></i>失效</span></div><svg id="lab-map" viewBox="0 0 920 540" role="img" aria-label="机制数据流动画"></svg><div class="lab-flight"><span id="lab-flight-kind">准备</span><strong id="lab-flight-value"></strong></div></div>
+    <aside class="lab-stack"><div class="lab-stack-head"><b>此刻的调用栈</b><small>栈底在上 · 当前帧在下</small></div><ol id="lab-stack-list"></ol><div class="lab-stack-note">展示与本步相关的调用帧，省略通用分派与异常分支。</div></aside>
+  </div>
+  <div class="lab-event" aria-live="polite"><span id="lab-event-no">起点</span><div><b id="lab-event-title"></b><p id="lab-event-explain"></p></div></div>
+  <div class="lab-bottom">
+    <div class="lab-code"><div class="lab-code-head"><b>本步对应的代码</b><button id="lab-source" type="button">打开完整源码</button></div><p id="lab-code-path"></p><pre id="lab-code-lines"></pre></div>
+    <div class="lab-journal"><b>已经发生的数据变化</b><ol id="lab-journal-list"></ol></div>
+  </div>
+  <p class="lab-disclaimer">按已核验源码编排的教学动画，并非连接运行中的调试器。地址用符号表示；引用显示持有关系，不冒充真实引用计数。绿色更新在数据到达后发生。</p>
+</div>
+
+</section><section class="lesson" id="objects"><div class="chapter-no">10 / 22</div><h2>脚本对象怎样指向原生对象</h2><div class="section-lead">类型登记建立工厂；包装建立对实例的访问通道。</div>
+<p>脚本调用 <code>doc.addObject("Part::Box", "Box")</code> 时，文档包装的方法表把名称映射到生成的静态回调。回调校验包装有效性，进入手写的 <code>DocumentPy::addObject</code>，解析参数并调用原生文档方法。原生对象创建并归入文档后，包装层调用它的虚函数 <code>getPyObject()</code>。<button type="button" class="source-btn" data-source="callback">生成的调用边界</button> <button type="button" class="source-btn" data-source="pyadd">脚本调用添加对象</button> <button type="button" class="source-btn" data-source="docadd">文档创建原生对象</button></p>
+<p>具体包装类型很重要：长方体继承原始体的实现，调用 <code>Part::Primitive::getPyObject()</code>。首次创建 <code>PrimitivePy(this)</code>，缓存到 <code>PythonObject</code>；以后返回同一包装对象的新引用。本次 <code>type(box)</code> 是 <code>PrimitivePy</code>，<code>box.TypeId</code> 却是 <code>Part::Box</code>，说明包装类型与原生类型不是一一对应。<button type="button" class="source-btn" data-source="wrapper">实际长方体包装</button></p>
+<pre><code>脚本变量 box ──强引用──→ 包装对象 W：PrimitivePy
+                              │ _pcTwinPointer
+                              ▼
+文档对象集合 ──管理──→ 原生对象 B：Part::Box
+                              │ PythonObject（包装引用）
+                              └───────────────────→ W
+
+W 的脚本类型 → PrimitivePy::Type → 基类包装的属性槽与方法表
+B 的工程类型 → Part::Box::classTypeId → 原生类型表</code></pre>
+<p>这不是复制整个模型到脚本堆。包装保留原生指针，操作由绑定代码转发；但具体属性返回值可以是新对象，不能把所有返回值概括成共享引用。</p>
+<h3>包装代码如何产生</h3><p>工程的包装描述文件、生成器和手写实现相互配合。生成文件提供类型槽、方法表、入口与异常边界；手写的 <code>*PyImp.cpp</code> 执行业务访问。当前生成结果在构建目录，源目录中没看到它，不代表这里使用了自动识别任意原生类的反射机制。</p>
+<p>原生虚函数表与脚本类型的函数槽也不同。调用 <code>getPyObject()</code> 使用原生虚分派；脚本访问属性则通过脚本类型槽进入包装。两者由显式生成和手写逻辑连接。</p>
+</section><section class="lesson" id="property"><div class="chapter-no">11 / 22</div><h2>一次尺寸赋值的数据全程</h2><div class="section-lead">从脚本值到原生属性，再进入修改通知与几何业务。</div><pre><code>box.Length = &quot;2 cm&quot;
+  脚本属性赋值机制
+    PyObjectBase::__setattro(包装, &quot;Length&quot;, 脚本字符串)
+      包装类 _setattr 继承分派
+        PropertyContainerPy::setCustomAttributes
+          getPropertyByName(&quot;Length&quot;)
+          PropertyQuantityConstraint::setPyObject
+            createQuantityFromPy → 原生量值
+            范围与单位检查
+            PropertyFloat::setValue(20.0)
+              aboutToSetValue()
+              _dValue = 20.0
+              hasSetValue()</code></pre>
+<p>属性槽收到的仍是 <code>PyObject*</code>。容器按名称找到属性，再虚分派到它的转换函数。长方体尺寸是长度属性，接受字符串、整数、浮点或量值包装，转成原生量值并处理约束与单位。实测 <code>"2 cm"</code> 写入后内部数值为 20 毫米。<button type="button" class="source-btn" data-source="setattro">属性槽进入原生方法</button> <button type="button" class="source-btn" data-source="genattr">生成的属性分派</button> <button type="button" class="source-btn" data-source="props">脚本属性写入</button> <button type="button" class="source-btn" data-source="quantity">读值与输入转换</button> <button type="button" class="source-btn" data-source="constraint">单位与约束</button></p>
+<p>真正写入是 <code>_dValue = lValue</code>，前后由属性通知包围。通知继续进入容器、文档事务和特征回调。解释器不会自己发现字段变化，也不会自动替原生字段建立撤销或依赖传播。<button type="button" class="source-btn" data-source="float">尺寸的真正写入</button></p>
+<h3>读取属性不一定得到活引用</h3><p><code>PropertyQuantity::getPyObject</code> 从当前数值与单位构造新的量值。因此 <code>q = box.Length</code> 后，把长方体长度设为 30，<code>q.Value</code> 仍是原来的 20。这已由本次探针验证。</p>
+<div class="table-wrap"><table><thead><tr><th>操作</th><th>路线</th><th>区别</th></tr></thead><tbody><tr><td><code>box.Length = 20</code></td><td>包装 → 转换 → 原生写入</td><td>脚本入口承担输入类型、单位和范围规则。</td></tr><tr><td><code>box-&gt;Length.setValue(20)</code></td><td>直接进入原生属性写入</td><td>绕过脚本转换，仍执行属性前后通知。</td></tr><tr><td><code>q = box.Length</code></td><td>具体属性构造返回值</td><td>长度返回独立量值，不是尺寸字段引用。</td></tr><tr><td><code>doc.recompute()</code></td><td>文档依赖调度与特征执行</td><td>赋值完成不等于完整文档重算完成。</td></tr></tbody></table></div><p>本实验长方体对普通尺寸变化会对象级自算，但文档表达式与依赖调度仍是另一层职责。既要看调用哪个接口，也要看特征如何响应通知。</p></section><section class="lesson" id="abi"><div class="chapter-no">12 / 22</div><h2>从对象布局到调用约定</h2><div class="section-lead">统一对象指针如何变成正确的原生函数调用。</div>
+<h3>统一对象头解决“这是什么”</h3>
+<p>常规运行库对象包含引用计数信息和类型指针。类型指针指向描述行为的脚本类型对象：怎样访问属性、能否调用、怎样释放。整数、字符串、模块和扩展包装都能通过统一指针交给接口，但具体数据布局不同，所以转换前需要类型判断或使用带错误检查的转换接口。</p>
+<p>一般扩展结构使用 <code>PyObject_HEAD</code> 引入对象头；本工程的包装基类则直接继承 <code>PyObject</code>，再由自己的构造和析构配合管理。通过 <code>PyObject*</code> 看它时操作的是脚本对象接口；通过合法的包装类型转换后，才访问 <code>_pcTwinPointer</code> 指向的模型。不要假定包装指针与模型指针数值相等，更不能从脚本 <code>id(box)</code> 推出原生长方体地址。<button type="button" class="source-btn" data-source="objectbase">包装基类与原生指针</button></p>
+<h3>方法表解决“调用哪个地址”</h3>
+<p>文档包装方法表中，名称 <code>addObject</code> 对应生成的 <code>staticCallback_addObject</code>，同时标注位置参数与关键字参数约定。运行库按这个约定准备自身、参数元组与关键字字典，再进入静态入口。静态入口取得文档包装，调用手写成员实现。函数指针存在并不足以正确调用；参数约定必须一致。<button type="button" class="source-btn" data-source="methodtable">脚本方法的地址与参数约定</button> <button type="button" class="source-btn" data-source="callback">生成的调用边界</button></p>
+<pre><code>脚本：doc.addObject(&quot;Part::Box&quot;, &quot;Box&quot;)
+  方法查找：名称 → 回调地址 + 参数约定
+  self：文档的脚本包装指针
+  args：(&quot;Part::Box&quot;, &quot;Box&quot;) 这个参数元组
+  kwd：关键字参数字典，或空指针
+    ↓
+  静态回调 → DocumentPy::addObject(args, kwd)
+    ↓ 参数解析
+  sType：指向类型名的字符串
+  sName：指向对象名的字符串
+    ↓
+  getDocumentPtr()-&gt;addObject(sType, sName, ...)</code></pre>
+<p>解析格式中的 <code>s</code> 表示字符串转换，<code>|</code> 表示后续可选参数，<code>O</code> 接收对象指针，<code>O!</code> 还要求指定类型。当前入口把类型名、可选名字、代理对象和布尔参数等逐项解析，解析失败返回空并保留异常。借用得到的字符串或对象不能脱离参数生命周期保存；需要长期保存时应复制原生字符串或明确持有脚本引用。<button type="button" class="source-btn" data-source="pyadd">脚本调用添加对象</button></p>
+<h3>数据转换是显式代码</h3>
+<div class="table-wrap"><table><thead><tr><th>脚本数据</th><th>常见原生接口</th><th>注意的边界</th></tr></thead><tbody><tr><td>整数</td><td><code>PyLong_AsLong</code></td><td>原生整数范围可能更小，溢出是错误；当前长度转换代码也使用这个接口。</td></tr><tr><td>浮点</td><td><code>PyFloat_AsDouble</code></td><td>转换结果与错误状态一起检查。</td></tr><tr><td>字符串</td><td><code>PyUnicode_AsUTF8</code></td><td>返回的缓冲区依附对象，不是需要自行释放的新字符串。</td></tr><tr><td>元组、字典</td><td>参数接口或容器接口</td><td>容器持有元素引用；取出、插入的引用责任依具体接口而定。</td></tr><tr><td>模型包装</td><td>类型校验 → 包装指针 → 原生指针</td><td>先保证包装有效，再使用活模型。</td></tr><tr><td>返回原生数值</td><td>构造脚本数字或量值对象</td><td>转换出的是返回对象，不是自动把原生栈变量暴露给脚本。</td></tr></tbody></table></div>
+<p>模块也不是一个原生名字空间的自动镜像。它有脚本字典，字典保存名称到脚本对象的引用；方法表和类型登记代码主动把能力发布进去。只有被发布的成员可经脚本查到，任意原生静态变量不会自行出现在模块里。</p>
+</section><section class="lesson" id="references"><div class="chapter-no">13 / 22</div><h2>引用计数：管理的是引用责任</h2><div class="section-lead">先说清谁负责释放，再看计数变化；不要靠一个数字猜所有权。</div>
+<p>新引用表示调用方取得一份强引用责任，最终必须释放或转交。借用引用表示没有得到这份责任，不能擅自减计数；想跨越所有者的生命周期保留它，就先取得自己的强引用。偷取引用表示接口接管调用方已有的那份责任。它们描述的是合同，不是指针是否指向新分配对象。</p>
+<div class="table-wrap"><table><thead><tr><th>接口或操作</th><th>成功时的责任</th><th>当前链条中的处理</th></tr></thead><tbody><tr><td><code>PyImport_ImportModule</code></td><td>新引用</td><td>普通导入工具内部释放一次。</td></tr><tr><td><code>PP_Load_Module</code></td><td>当前包装函数返回借用引用</td><td><code>loadModule</code> 不再减计数。</td></tr><tr><td><code>PyImport_AddModule</code></td><td>借用引用</td><td>不会因获取主模块而新增释放责任。</td></tr><tr><td><code>PyModule_GetDict</code></td><td>借用引用</td><td>字典由模块持有，使用时必须保证模块仍存在。</td></tr><tr><td><code>PyDict_GetItemString</code></td><td>借用引用</td><td>读取缓存项不转移所有权。</td></tr><tr><td><code>PyObject_GetAttrString</code></td><td>新引用</td><td>即使取到原有属性，也要释放这份引用。</td></tr><tr><td><code>PyObject_CallObject</code></td><td>成功返回新引用</td><td>调用结果使用完需要释放。</td></tr><tr><td><code>getPyObject()</code></td><td>工程约定向调用方提供新引用</td><td>可以是同一缓存包装对象增加引用，而非每次新建。</td></tr><tr><td><code>PyModule_AddObject</code></td><td>成功时偷取值的引用</td><td>失败时不能按成功转交处理。</td></tr><tr><td><code>PyTuple_SetItem</code></td><td>偷取传入项的引用</td><td>不要再按借用接口的方式释放该项。</td></tr></tbody></table></div>
+<p>在零件普通导入里，标准接口返回 <code>M</code> 的新引用；模块缓存仍持有它；工具减去本次获得的引用，再把指针借给调用方。这样解释了为何减计数后还能返回指针，也说明这段写法依赖缓存持有条件，不能当成任意对象通用模板。<button type="button" class="source-btn" data-source="pp">导入工具主路径</button> <a href="https://docs.python.org/3.12/c-api/import.html">导入接口合同</a>、<a href="https://docs.python.org/3.12/c-api/module.html">模块接口合同</a>。</p>
+<h3>工程的自动管理包装</h3><p>本工程常见 <code>Py::Object(ptr, true)</code> 表示接管已有的新引用；从借用指针构造普通包装会按其接口建立自身引用。<code>Py::new_reference_to</code> 给返回者一份新引用。阅读时必须核对具体构造函数约定，不能凭布尔值名字猜。实际原始体包装创建后就由自动管理对象接管，再以新引用形式返回。<button type="button" class="source-btn" data-source="wrapper">实际长方体包装</button></p>
+<p>把引用计数当成“变量个数”会误判：容器、缓存和临时对象也持有引用；3.12 还存在不会按普通方式增减的永久对象。<code>Py_DECREF</code> 可能触发对象析构和用户代码，因而也是一次可能重入的调用边界。<a href="https://docs.python.org/3.12/c-api/refcounting.html">引用计数规则</a>。</p>
+</section><section class="lesson" id="calls"><div class="chapter-no">14 / 22</div><h2>原生侧主动调用脚本：两条路线</h2><div class="section-lead">执行文本与调用对象共享同一解释器，但输入、命名空间和返回规则不同。</div>
+<h3>路线一：编译并执行字符串</h3><p><code>runString</code> 持锁取得主模块，借用模块字典，把它同时作为全局和局部命名空间传给 <code>PyRun_String(..., Py_file_input, dict, dict)</code>。这会把语句文本编译为代码对象并执行。顶层赋值写入该字典，函数定义产生函数对象，导入语句继续调用导入机制。<button type="button" class="source-btn" data-source="run">字符串代码执行</button></p>
+<p>普通语句执行的结果不是最后一行表达式的值。<code>runString</code> 返回的是执行结果的文本表示，通常为 <code>"None"</code>。要取表达式结果，应看 <code>runStringObject</code> 使用的 <code>Py_eval_input</code>，或者从明确的对象接口取值。文件输入、单个表达式与交互输入是不同编译模式，不能互换。</p>
+<h3>路线二：构造参数并调用可调用对象</h3><p>当数据来自变量，应优先传对象，而不是拼接语句文本。下面是放在“应用初始化后、结束前”的局部教学片段，需要工程已有的解释器头文件和脚本包装类型。片段不改动现有实验，未作为新增原生目标编译。</p>
+<pre><code>// 1. 先取得解释器锁；它必须比下方对象更晚析构。
+Base::PyGILStateLocker lock;
+
+// 2. 导入模块，并接管标准接口返回的新引用。
+PyObject* rawModule = PyImport_ImportModule(&quot;math&quot;);
+if (!rawModule) {
+    throw Base::PyException();
+}
+Py::Object module(rawModule, true);
+
+// 3. 取得函数和参数。局部包装在锁释放前结束。
+PyObject* rawFunction = PyObject_GetAttrString(module.ptr(), &quot;sqrt&quot;);
+if (!rawFunction) {
+    throw Base::PyException();
+}
+Py::Object function(rawFunction, true);
+Py::TupleN arguments(Py::Float(144.0));
+
+// 4. 调用并接管结果，再按明确类型转换。
+PyObject* rawResult = PyObject_CallObject(function.ptr(), arguments.ptr());
+if (!rawResult) {
+    throw Base::PyException();
+}
+Py::Object result(rawResult, true);
+double answer = PyFloat_AsDouble(result.ptr());
+if (PyErr_Occurred()) {
+    throw Base::PyException();
+}
+// answer 的期望值为 12.0；这里只保留原生数值。</code></pre>
+<p>上面每个取得新引用的操作都立即交给自动管理对象，失败转换为原生异常。作用域退出时先销毁结果、参数、函数和模块包装，最后释放锁。若把脚本对象包装放到锁的外层，即使函数调用时持锁，析构时仍可能在无锁状态减引用。</p>
+<p>再深入一层：可调用对象可能是脚本函数，也可能是扩展函数。前者进入解释器帧与字节码求值，后者经调用约定直接进入原生函数地址。所以“调用脚本接口”不代表一定执行一段脚本字节码。<a href="https://docs.python.org/3.12/extending/extending.html">扩展函数与调用约定</a>。</p>
+</section><section class="lesson" id="errors"><div class="chapter-no">15 / 22</div><h2>异常如何穿过语言边界</h2><div class="section-lead">错误标志与返回值是一对合同，原生异常不能任意穿过运行库边界。</div>
+<p>多数返回对象的运行库接口失败时返回空，并在当前线程的解释器状态中保留异常。原生调用方需要同时理解这两个信号。不能把空指针当成普通空结果继续使用，也不能设置了异常后又返回一个成功对象。数值转换接口的错误值可能与正常值相同，必须按合同检查异常状态。</p>
+<div class="table-wrap"><table><thead><tr><th>方向</th><th>实际处理</th><th>本次源码依据</th></tr></thead><tbody><tr><td>导入失败 → 原生调用者</td><td>导入接口返回空；<code>loadModule</code> 区分退出异常，其余转为 <code>Base::PyException</code></td><td><button type="button" class="source-btn" data-source="load">持锁导入与异常转换</button></td></tr><tr><td>原生文档方法失败 → 脚本调用者</td><td>生成回调捕获原生异常，设置脚本异常，再返回空</td><td><button type="button" class="source-btn" data-source="callback">生成的调用边界</button></td></tr><tr><td>原生属性转换失败 → 脚本赋值</td><td>属性分派捕获异常，设置脚本异常，再返回错误状态</td><td><button type="button" class="source-btn" data-source="genattr">生成的属性分派</button></td></tr><tr><td>脚本特征执行失败 → 原生重算</td><td>执行桥读取解释器异常并转换，再由特征流程处理</td><td><button type="button" class="source-btn" data-source="proxy">原生重算调用脚本</button></td></tr></tbody></table></div>
+<p><code>Base::PyException</code> 读取并清理解释器中的异常信息，将类型、消息、回溯等用于原生处理。调试时，先查看运行库失败返回处的异常，再查看转换后的原生异常；转换完成后原始异常槽可能已经清空，不能据此认定从未出错。</p>
+<p>异常分类用异常类型或错误枚举，例如 <code>PyErr_ExceptionMatches</code>；错误消息供人阅读，不应用消息子串决定程序分支。底层调用已经设定明确异常时，清理自己的资源并传播即可，不要随意覆盖成无上下文的通用错误。<a href="https://docs.python.org/3.12/c-api/exceptions.html">解释器异常合同</a>。</p>
+</section><section class="lesson" id="threads"><div class="chapter-no">16 / 22</div><h2>线程状态与解释器锁</h2><div class="section-lead">锁保护解释器访问；它不自动保护整个模型业务。</div>
+<p>初始化线程释放解释器锁后，<code>loadModule</code>、<code>runString</code> 等入口使用 <code>PyGILStateLocker</code>。构造调用 <code>PyGILState_Ensure</code>，析构调用 <code>PyGILState_Release</code>；局部对象既保证正常返回配对，也保证异常退出配对。它还能处理线程所需的运行库关联状态，不是单纯给一个整数加锁。<button type="button" class="source-btn" data-source="gil">锁的作用域管理</button></p>
+<p>进入零件入口时已持锁，入口再调用脚本导入材质模块，形成嵌套调用。工程使用的作用域锁记录进入前状态，因此嵌套结束不会把外层需要的锁无条件释放。代码在一次同步调用中多次穿过边界，不需要排队给另一个“解释器线程”。</p>
+<h3>什么时候可以暂时释放</h3><p><code>PyGILStateRelease</code> 在已持锁前提下保存线程状态并释放锁，析构时恢复。适用情况是耗时的纯原生计算，且这段区间不访问脚本对象、不改引用、不触发脚本回调。不能只看到几何计算就立即释放：若沿途可能经属性通知回调脚本，必须先审查整条路径。</p>
+<p>解释器锁并不保证文档、几何对象和界面线程安全。即使线程可以安全调用运行库，也仍要遵守工程的文档线程约定。常见死锁是主线程持解释器锁等待工作线程，而工作线程正在等待同一把锁进入脚本回调。</p>
+<p>本页讨论实际使用的常规 3.12 构建。不要把本工程的单例管理方式直接推广到多个子解释器，也不要把较新无全局锁构建的行为套过来。工程的进程级静态类型表、静态脚本类型和缓存引用需要专门设计，不能仅通过多建解释器就获得隔离。<a href="https://docs.python.org/3.12/c-api/init.html">线程状态与解释器锁</a>。</p>
+</section><section class="lesson" id="lifetime"><div class="chapter-no">17 / 22</div><h2>生命周期：有脚本引用不等于模型还活着</h2><div class="section-lead">脚本包装与原生业务对象的销毁由不同机制控制。</div>
+<p>文档管理长方体，脚本引用管理包装对象。关闭文档后，原生对象可以销毁，但脚本变量仍持有包装。原生文档对象析构因此主动调用 <code>setInvalid()</code>，清理跟踪属性并把原生指针置空。包装属性入口检查有效性后抛引用失效异常，阻止继续访问已经删除的模型。<button type="button" class="source-btn" data-source="invalidate">原生对象析构</button> <button type="button" class="source-btn" data-source="invalidptr">包装失效操作</button></p>
+<p>本次实测：文档打开时两次取同名对象得到同一个包装；关闭文档后，旧变量访问长度抛出 <code>ReferenceError</code>。这比“脚本引用计数保证原生对象存在”更准确。几何值或独立量值等其他包装可能有不同所有权，必须逐类看实现，不能由文档对象推断所有包装都不拥有原生对象。</p>
+<h3>退出次序也属于正确性</h3><p>原实验先关闭所有文档，再进入应用销毁。应用销毁流程清理应用状态与观察者，调用解释器结束，再销毁管理单例和原生类型表。解释器结束函数恢复保存的线程状态，进行模块清理并调用 <code>Py_Finalize</code>。<button type="button" class="source-btn" data-source="destruct">应用结束次序</button> <button type="button" class="source-btn" data-source="finalize">解释器结束</button></p>
+<p>仍有后台线程调用解释器、静态包装在结束后才减引用、回调仍指向已销毁模型，都会让退出阶段成为错误发生点。不能把重复初始化/结束解释器当成扩展模块热重载；运行库与第三方扩展的进程级状态未必能完整重建。</p>
+</section><section class="lesson" id="callback"><div class="chapter-no">18 / 22</div><h2>进阶：原生重算反过来执行脚本特征</h2><div class="section-lead">同一个模型调度可以跨边界回调，再把结果写回原生属性。</div>
+<p>普通长方体在原生 <code>execute()</code> 中建模；脚本特征则把实现对象保存在代理属性。重算进入 <code>FeaturePythonT::execute</code>，再调用 <code>FeaturePythonImp::execute</code>。后者持锁，通过已保存的可调用对象执行代理方法；常用分支把当前原生对象的包装作为参数传入。<button type="button" class="source-btn" data-source="proxy">原生重算调用脚本</button></p>
+<pre><code>原生文档重算
+  → 脚本特征的原生 execute
+  → 代理执行桥取得解释器锁
+  → 调用代理的 execute(obj)
+  → 脚本调用 Part.makeBox(...)
+  → 原生几何算法生成形状
+  → 脚本执行 obj.Shape = ...
+  → 属性包装转换
+  → 原生形状属性写入与通知
+  → 返回原生重算调度</code></pre>
+<p>下列练习展示一次完整回路，在独立临时文档中执行。它与本页已验证的普通长方体探针不同，属于供你逐步调试的练习。代理只负责生成结果，不在属性变化回调里递归重算文档。</p>
+<pre><code>import FreeCAD as App
+import Part
+
+# 代理只实现几何生成，文档继续持有模型对象。
+class CubeLogic:
+    def execute(self, obj):
+        size = obj.Length.Value
+        obj.Shape = Part.makeBox(size, size, size)
+
+doc = App.newDocument(&quot;CallbackLesson&quot;)
+obj = doc.addObject(&quot;Part::FeaturePython&quot;, &quot;Cube&quot;)
+obj.addProperty(&quot;App::PropertyLength&quot;, &quot;Length&quot;)
+obj.Length = 12
+obj.Proxy = CubeLogic()
+doc.recompute()
+print(obj.Shape.Volume)       # 期望 1728
+App.closeDocument(doc.Name)</code></pre>
+<p>当前桥中，代理显式返回假表示没有处理，可继续走父类实现；普通无返回值的方法返回空值对象，按已处理计算。还有绑定代理对象的另一种调用约定，以及未实现异常的专门分支。学习时先掌握常用的传模型参数路线，再对照源码理解这些明确分支，不能把所有“返回空”当成执行失败。</p>
+<p>设计这类混合特征时，原生层继续拥有文档身份、属性和调度，脚本层实现可替换算法。数据通过明确参数与属性写回，不通过比较前后字段去猜变化来源。</p>
+</section><section class="lesson" id="debug"><div class="chapter-no">19 / 22</div><h2>把教材变成一次可重复的调试</h2><div class="section-lead">按阶段一次设置足够的断点，不需要反复碰运气。</div>
+<p>先使用当前“FreeCAD-Labs”启动配置。它停在入口，因此能捕获解释器首次建立。若从场景零才开始调试，初始化断点已经错过。先禁用无关热点断点，进入对应阶段后再启用下面的一组。</p>
+<div class="table-wrap"><table><thead><tr><th>阶段</th><th>断点位置</th><th>到达时检查什么</th></tr></thead><tbody><tr><td>初始化</td><td><code>Application.cpp:2570</code>、<code>Interpreter.cpp:650 / 627 / 657</code></td><td>是否已经初始化；最终配置；保存的线程状态。</td></tr><tr><td>场景零开始</td><td><code>Type.cpp:95 / 108</code></td><td>类型名、模块名、已加载集合。</td></tr><tr><td>进入导入</td><td><code>Interpreter.cpp:487</code>、<code>PyTools.c:442 / 472</code></td><td>当前线程、锁作用域、模块指针和失败分支。</td></tr><tr><td>回到扩展</td><td><code>AppPart.cpp:213 / 452</code>，或函数断点 <code>PyInit_Part</code></td><td>依赖导入完成后是否到达长方体登记。</td></tr><tr><td>写类型表</td><td><code>BaseClass.cpp:77</code>、<code>Type.cpp:140</code></td><td>名称、父类型、创建函数地址，以及新插入的表项。</td></tr><tr><td>真正构造</td><td><code>Type.cpp:82</code>、<code>FeaturePartBox.cpp:39</code></td><td>工厂地址；构造完成的原生对象指针。</td></tr><tr><td>脚本包装</td><td><code>PrimitiveFeature.cpp:104</code></td><td>首次创建包装、缓存包装、原生指针与类型。</td></tr><tr><td>脚本赋值</td><td><code>PyObjectBase.cpp:356</code>、<code>PropertyContainerPyImp.cpp:691</code>、<code>PropertyUnits.cpp:182</code>、<code>PropertyStandard.cpp:1020</code></td><td>脚本值的类型、属性指针、转换值、实际存储位置。</td></tr><tr><td>销毁</td><td><code>DocumentObject.cpp:84</code>、<code>PyObjectBase.h:268</code></td><td>原生对象销毁时包装是否还被脚本持有；指针何时清空。</td></tr></tbody></table></div>
+<p>原生实验场景零只触发创建链，不会自动经过全部脚本属性入口。后面那些断点需要运行脚本探针或交互执行对应赋值。不要因为原生 <code>setValue</code> 没命中脚本转换函数就认为绑定失效。</p>
+<h3>查看变量时的边界</h3><p>优先查看已有局部变量和容器内容。调试器表达式求值可能执行函数：调用导入、增加引用或取脚本属性都可能改变状态，甚至在无锁线程暂停时导致等待。需要调用运行库接口验证时，应在明确持锁的程序位置执行，不在任意暂停点强行调用。</p>
+<p>类型登记频繁，可在登记函数用名称条件只关注长方体；也可先在零件登记行停住，再单步进入。构建有优化时，宏生成函数可能没有独立可绑定的行，按函数名或进入具体写表语句更可靠。解释器动态库若没有对应调试符号，仍可在工程的导入前与模块入口后设置两端断点；深入运行库逐行调试需要匹配 3.12.10 的符号和源文件，不能只拿最新版源码对行号。</p>
+</section><section class="lesson" id="labs"><div class="chapter-no">20 / 22</div><h2>从入门到熟练：六组验证练习</h2><div class="section-lead">每个练习都先预测，再看断点与数据；不要只背最后输出。</div>
+<div class="exercise"><h3>一 · 创建时机</h3><p>在配置初始化之前、应用初始化之后分别观察运行库状态。为什么导入工具中再次初始化不清空模块？</p><details><summary>核对解释</summary><p>首次配置初始化建立运行库；后续兼容初始化在已初始化状态直接返回。管理单例构造与运行库创建不同。</p></details></div>
+<div class="exercise"><h3>二 · 注册与创建分离</h3><p>场景零分别停在长方体登记与构造位置。哪个时刻有工厂地址？哪个时刻才有实例？</p><details><summary>核对解释</summary><p>登记后表里已有创建函数指针，但尚无本次实例。回到工厂调用后才进入构造；场景零随后主动删除临时实例。</p></details></div>
+<div class="exercise"><h3>三 · 再次导入</h3><p>重复同类型创建，观察工程已加载集合与模块缓存。模块入口是否再次执行？</p><details><summary>核对解释</summary><p>正常第二次调用被工程集合跳过；直接重复标准导入也通常命中模块缓存。这两层缓存不是一张表。不要删除缓存后推断能可靠重跑原生初始化。</p></details></div>
+<div class="exercise"><h3>四 · 值与身份</h3><p>对比 <code>doc.getObject("Box") is box</code> 与“保存量值后改变长度”。为什么前者保持对象身份，后者不随模型变化？</p><details><summary>核对解释</summary><p>模型缓存包装对象并返回新引用；长度读取构造独立量值。相同的读取语法不代表相同的数据传递方式。</p></details></div>
+<div class="exercise"><h3>五 · 转换与错误</h3><p>在临时文档把长度赋为 <code>"2 s"</code>，观察单位转换异常如何回到脚本；再比较原生负尺寸写入与脚本负尺寸写入。</p><details><summary>核对解释</summary><p>秒与长度单位不匹配，转换层抛异常，由生成入口转回脚本。当前长度脚本入口会约束负值，而原生浮点写入没有这一步；模型算法随后仍有自己的有效性检查。两种失败不能混同。</p></details></div>
+<div class="exercise"><h3>六 · 活包装与已删除模型</h3><p>保留脚本变量，关闭文档后再访问。怎样证明错误来自原生生命周期结束，而非模块被卸载？</p><details><summary>核对解释</summary><p>在原生对象析构与包装失效处观察；包装仍被变量引用，模块也仍在缓存中，但原生指针已经清空，属性入口因此报引用失效。</p></details></div>
+</section><section class="lesson" id="troubleshoot"><div class="chapter-no">21 / 22</div><h2>故障定位与工程边界</h2><div class="section-lead">按失败发生的层定位，避免把所有问题都归结为“解释器没加载”。</div><div class="table-wrap"><table><thead><tr><th>现象</th><th>先查哪一层</th><th>应收集的证据</th></tr></thead><tbody><tr><td>初始化就失败</td><td>运行库与标准库部署</td><td>真实动态库、版本、位数、配置路径、标准库编码模块是否存在。</td></tr><tr><td>找不到模块</td><td>模块查找</td><td>模块名、搜索路径、查找器结果、目标文件路径。</td></tr><tr><td>模块文件存在但装载失败</td><td>系统依赖</td><td>依赖库是否可解析、二进制位数、解释器小版本、调试与发布运行库是否匹配。</td></tr><tr><td>导入成功但类型仍不存在</td><td>模块初始化与登记</td><td>是否导入同名其他模块、实际文件来源、入口是否登记该类型、类型名是否正确。</td></tr><tr><td>重复初始化断言</td><td>缓存与重复登记</td><td>是否手动调用入口、移除缓存、混用多个基础库实例。</td></tr><tr><td>包装存在但属性访问失败</td><td>原生生命周期</td><td>文档是否关闭、包装是否失效、是否仍保存旧模型引用。</td></tr><tr><td>修改数值但形状不符</td><td>模型通知与重算</td><td>输入是否转换成功、通知是否到达、对象与文档重算阶段、算法错误。</td></tr><tr><td>偶发崩溃或退出卡死</td><td>引用、锁与线程</td><td>借用引用是否越界、析构是否持锁、是否重入、线程退出与解释器结束顺序。</td></tr></tbody></table></div>
+<p>需要增加诊断时，一次覆盖完整边界：主进程与运行库版本、模块请求名与实际文件、入口开始与返回、注册名称与工厂地址、对象与包装地址、属性输入类型与转换值、异常类型、线程与生命周期事件。诊断使用事件发生时的真实数据，不靠事后对比猜来源。本次未修改业务代码加入日志。</p>
+<h3>进一步掌握时要能解释的限制</h3>
+<p>脚本类型登记通过 <code>PyType_Ready</code> 补全继承槽，再把类型发布到模块；原生登记则保存工厂和父类型。这两条路线可以发生在同一个模块入口，却不能合并成一个“注册动作”。<button type="button" class="source-btn" data-source="addtype">脚本类型登记</button></p>
+<p>单阶段扩展与静态类型容易依赖进程级状态。多个解释器、模块卸载、热更新和并行调用都需要重新审查所有权。公共稳定接口也不等于任意扩展能跨解释器小版本通用；使用完整类型布局的扩展必须匹配其编译与运行条件。</p>
+<p>绑定生成器和自动管理包装减少重复代码，但不能代替你决定模型归属、值拷贝语义、异常映射与线程合同。真正能独立排查混合编程问题，意味着你能指出每个边界传递的类型、持有者、引用责任，以及失败返回时留下的状态。</p>
+</section><section class="lesson" id="evidence"><div class="chapter-no">22 / 22</div><h2>本次验证记录与继续阅读</h2><div class="section-lead">把已观测结果与机制解释放在一起核对。</div><div class="table-wrap"><table><thead><tr><th>验证项</th><th>实际结果</th></tr></thead><tbody><tr><td>运行库版本</td><td>3.12.10 (tags/v3.12.10:0cc8128, Apr 17 2025, 11:11:39) [MSC v.1943 64 bit (AMD64)]</td></tr><tr><td>实际进程</td><td><code>C:\Users\adminstrator\source\FreeCAD\build\msvc-dev\bin\FreeCADCmd.exe</code></td></tr><tr><td>导入前零件模块缓存</td><td>未存在</td></tr><tr><td>模块文件</td><td><code>C:\Users\adminstrator\source\FreeCAD\build\msvc-dev\Mod\Part\Part.pyd</code></td></tr><tr><td>加载器</td><td>ExtensionFileLoader</td></tr><tr><td>重复导入同一模块</td><td>是</td></tr><tr><td>原生类型 / 脚本包装类型</td><td><code>Part::Box / PrimitivePy</code></td></tr><tr><td>重复查询同一包装</td><td>是</td></tr><tr><td>带单位字符串写入</td><td>2 厘米 → 内部长度 20 毫米</td></tr><tr><td>旧量值 / 新模型长度</td><td>20 / 30</td></tr><tr><td>重算后体积</td><td>3000 立方毫米</td></tr><tr><td>关闭文档后读取</td><td><code>ReferenceError: Cannot access attribute &#x27;Length&#x27; of deleted object</code></td></tr></tbody></table></div>
+<p>原生实验已经完整跑过全部场景，结束时读回长度 30、体积 4500。它还验证了场景零类型查询由未登记变为长方体。上面的绑定探针另开进程，仅验证包装与数据转换，体积 3000 不应与原生实验最终文档的体积混为一谈。</p>
+<details><summary>展开本次绑定探针完整代码</summary><pre><code># 读取当前进程并验证对象包装、属性转换和失效行为。
+import sys
+import json
+import importlib
+import FreeCAD as App
+
+result = {&quot;python&quot;: sys.version, &quot;executable&quot;: sys.executable,
+          &quot;part_before&quot;: &quot;Part&quot; in sys.modules, &quot;path&quot;: sys.path}
+import Part
+result[&quot;part_file&quot;] = Part.__file__
+result[&quot;part_loader&quot;] = type(Part.__loader__).__name__
+result[&quot;same_module&quot;] = importlib.import_module(&quot;Part&quot;) is Part
+doc = App.newDocument(&quot;BindingProbe&quot;)
+box = doc.addObject(&quot;Part::Box&quot;, &quot;Box&quot;)
+result[&quot;native_type&quot;] = box.TypeId
+result[&quot;wrapper_type&quot;] = str(type(box))
+result[&quot;same_wrapper&quot;] = doc.getObject(&quot;Box&quot;) is box
+box.Length = &quot;2 cm&quot;
+result[&quot;length_mm&quot;] = box.Length.Value
+quantity = box.Length
+box.Length = 30
+result[&quot;old_quantity_value&quot;] = quantity.Value
+result[&quot;current_length_value&quot;] = box.Length.Value
+doc.recompute()
+result[&quot;volume&quot;] = box.Shape.Volume
+App.closeDocument(doc.Name)
+try:
+    result[&quot;after_close&quot;] = box.Length.Value
+except Exception as error:
+    result[&quot;after_close_error&quot;] = type(error).__name__
+    result[&quot;after_close_message&quot;] = str(error)
+with open(r&quot;C:\Users\adminstrator\source\FreeCAD\build\python-core-guide\probe-result.json&quot;, &quot;w&quot;, encoding=&quot;utf-8&quot;) as output:
+    json.dump(result, output, ensure_ascii=False, indent=2)
+print(&quot;PROBE_COMPLETED&quot;)</code></pre></details>
+<details><summary>展开原生实验的运行输出</summary><pre><code>FreeCAD 1.1.4, Libs: 1.1.4R45044 (Git)
+
+============ 场景 0 | 类型系统（FC01/FC05） ============
+断点：src/Base/Type.cpp:140  Type::createType
+启动即查 fromName(&quot;Part::Box&quot;) -&gt; BadType（Part 模块还没初始化，类型表里没有它！）
+
+&gt;&gt;&gt; 场景 0：createInstanceByName(&quot;Part::Box&quot;, true) —— 断点 Type.cpp:95/108/139
+&gt;&gt;&gt; （回车继续）
+再查 fromName(&quot;Part::Box&quot;) -&gt; Part::Box
+沿 getParent() 上溯继承链（对照 FC03 第三节的容器继承表）：
+  Part::Box
+  Part::Primitive
+  Part::Feature
+  App::GeoFeature
+  App::DocumentObject
+  App::TransactionalObject
+  App::ExtensionContainer
+  App::PropertyContainer
+  Base::Persistence
+  Base::BaseClass
+
+============ 场景 1 | 创建长方体的两条路径（FC01/FC04） ============
+断点：src/App/Document.cpp:3085  Document::addObject
+
+&gt;&gt;&gt; 场景 1：路径 A —— 字符串 &quot;Part::Box&quot; 查类型表创建
+&gt;&gt;&gt; （回车继续）
+
+&gt;&gt;&gt; 场景 1：路径 B —— new Part::Box + addObject(box, &quot;Box001&quot;)
+&gt;&gt;&gt; （回车继续）
+Recompute......
+						(50 %)	
+						(100 %)	
+								
+getPropertyByName(&quot;Length&quot;)-&gt;getValue() = 10  （统一访问：无需 Part::Box*）
+box  体积 = 1000
+box2 体积 = 1000
+
+============ 场景 2 | 属性主链：Length.setValue(20)（FC03） ============
+断点：PropertyStandard.cpp:1020 → Property.cpp:299/284 →
+      DocumentObject.cpp:889 → FeaturePartBox.cpp:228 → :54
+
+&gt;&gt;&gt; 场景 2：原生 setValue(20.0)（区别于脚本路径的 setPyObject）
+&gt;&gt;&gt; （回车继续）
+改前 Length = 10，体积 = 1000
+改后 Length = 20，体积 = 2000（期望 2000）
+
+&gt;&gt;&gt; 场景 2 反例：原生 setValue 不做范围钳制（FC03§4 末尾的提醒）
+&gt;&gt;&gt; （回车继续）
+Length.getValue() = -5  ← 原样写入了 -5！execute 随即报 &quot;too small&quot;，
+    体积仍 = 2000（算法拒绝，旧形状保留）
+undo 后 Length = 20，体积 = 2000
+
+============ 场景 3 | 引用属性与依赖图（FC04/FC03§12） ============
+断点：src/App/PropertyLinks.cpp:730  PropertyLink::setValue
+
+&gt;&gt;&gt; 场景 3：先改 Length=30 并创建圆柱与 Cut
+&gt;&gt;&gt; （回车继续）
+
+&gt;&gt;&gt; 场景 3：cut.Base/cut.Tool 赋值（PropertyLink::setValue 断点）
+&gt;&gt;&gt; （回车继续）
+Recompute......
+						(25 %)	
+						(50 %)	
+						(75 %)	
+						(100 %)	
+								
+cut 的 OutList（我引用谁）: Box Cylinder 
+box 的 InList（谁引用我）: Cut 
+cut 体积 = 2968.58（3000 - 31.42：圆柱默认立在原点，盒子也在原点角，
+  只有圆柱的 1/8 落进盒内——pi*2^2*20/8。想切完整的孔，
+  可给圆柱设置 Placement 把它挪到盒子中心）
+
+============ 场景 4 | 两级重算 + 表达式（FC03§9/§13） ============
+断点：Document.cpp:2692/3008、PropertyExpressionEngine.cpp:692、
+      DocumentObject.cpp:297（mustRecompute，Enforce 已置位）
+
+&gt;&gt;&gt; 场景 4：setExpression(Width = Length / 2)
+&gt;&gt;&gt; （回车继续）
+Recompute......
+						(25 %)	
+						(50 %)	
+						(75 %)	
+						(100 %)	
+								
+Width = 15（= 30/2），体积 = 4500（期望 4500）
+
+&gt;&gt;&gt; 场景 4：Length.setValue(40) —— 立即自算用的是旧 Width！
+&gt;&gt;&gt; （回车继续）
+赋值瞬间体积 = 6000（40*15*10 = 6000：旧 Width）
+Recompute......
+						(25 %)	
+						(50 %)	
+						(75 %)	
+						(100 %)	
+								
+recompute 后 Width = 20，体积 = 8000（期望 8000）
+
+============ 场景 5 | 事务：撤销/重做（FC09） ============
+断点：Document.cpp:157/405、Transactions.cpp:177/388、
+      PropertyStandard.cpp:1076（Paste）
+
+&gt;&gt;&gt; 场景 5：openTransaction → 改长度 → commitTransaction
+&gt;&gt;&gt; （回车继续）
+Length = 30，可撤销步数 = 4
+
+&gt;&gt;&gt; 场景 5：doc-&gt;undo()（Paste 把快照旧值写回，再次触发通知链）
+&gt;&gt;&gt; （回车继续）
+undo 后 Length = 40，体积 = 8000，可重做步数 = 1
+Recompute......
+						(25 %)	
+						(50 %)	
+						(75 %)	
+						(100 %)	
+								
+redo 后 Length = 30，Width = 15，体积 = 4500（期望 30*15*10 = 4500）
+
+============ 场景 6 | 持久化（FC02） ============
+断点：保存 Document.cpp:1763/984、PropertyStandard.cpp:1056、
+      PropertyTopoShape.cpp:704；打开 Document.cpp:1938、
+      PropertyStandard.cpp:1061、FeaturePartBox.cpp:228
+
+&gt;&gt;&gt; 场景 6：saveAs —— FCStd 本质是个 zip（Document.xml + *.brp）
+&gt;&gt;&gt; （回车继续）
+已保存到 debug-labs/FreeCADLabs_output.FCStd
+
+&gt;&gt;&gt; 场景 6：关闭后重新打开（留意 isRestoring 分支拦住“假编辑”）
+&gt;&gt;&gt; （回车继续）
+Importing project files......
+						(20 %)	
+						(40 %)	
+						(60 %)	
+						(80 %)	
+						(100 %)	
+								
+Postprocessing......
+						(100 %)	
+								
+读回 Length = 30，体积 = 4500
+
+FreeCADLabs 全部场景结束。</code></pre></details>
+<p>本页对工程源码的说明以嵌入片段为准；对运行库内部的说明以固定版本源码和 3.12 接口文档为准。调用链图是删去无关分支后的解释，不是采样跟踪记录。教学原生片段未作为新增目标编译，代理特征练习供独立调试。</p>
+<div class="table-wrap"><table><thead><tr><th>进一步阅读</th><th>用它回答什么</th></tr></thead><tbody><tr><td><a href="https://docs.python.org/3.12/c-api/init_config.html">解释器初始化配置</a></td><td>配置如何进入运行时，资源如何释放。</td></tr><tr><td><a href="https://docs.python.org/3.12/c-api/import.html">模块导入接口</a></td><td>导入、获取模块和重载的区别。</td></tr><tr><td><a href="https://docs.python.org/3.12/c-api/refcounting.html">引用计数</a></td><td>引用责任、永久对象与析构行为。</td></tr><tr><td><a href="https://docs.python.org/3.12/c-api/exceptions.html">异常接口</a></td><td>失败返回和异常状态怎样配合。</td></tr><tr><td><a href="https://docs.python.org/3.12/c-api/init.html">线程与解释器生命周期</a></td><td>线程状态、锁与结束顺序。</td></tr><tr><td><a href="https://github.com/python/cpython/tree/v3.12.10">对应版本的运行库源码</a></td><td>把导入与初始化追到具体原生实现。</td></tr></tbody></table></div>
+<p class="closing">重新回到最初的断点：模块导入让原生类型表发生变化，是因为导入器调用了原生初始化函数；脚本访问模型能改变原生属性，是因为包装把操作转给了活对象的属性接口。这是两条明确的调用与数据路径。</p>
+</section><footer class="footer">文档核验：2026 年 11 月 5 日。工程源码片段保留原有注释与标识符；正文使用中文解释。原有业务源文件与参考教材均未改动。</footer></main>
+<dialog id="source-dialog" aria-labelledby="source-title"><div class="dialog-head"><h3 id="source-title"></h3><button data-close="source-dialog" aria-label="关闭源码窗口">关闭</button></div><div class="dialog-body"><p class="source-path" id="source-path"></p><button id="copy-source">复制源码</button><span class="copy-status" id="copy-status" role="status"></span><div class="source-lines" id="source-lines"></div></div></dialog>
+<dialog id="search-dialog" aria-labelledby="search-title"><div class="dialog-head"><h3 id="search-title">查找正文</h3><button data-close="search-dialog">关闭</button></div><div class="dialog-body"><input class="search-input" id="search-input" placeholder="输入概念、函数或现象，例如：引用、createType" aria-label="搜索关键词"><p class="caption" id="search-count" role="status"></p><div id="search-results"></div></div></dialog>
+<script type="application/json" id="source-data">{"main": {"title": "实验启动与结束", "path": "debug-labs/cpp/LabsMain.cpp", "first": 306, "last": 346, "text": "int main(int argc, char* argv[])\n{\n#ifdef _WIN32\n    SetConsoleOutputCP(65001);  // 集成终端按 UTF-8 显示中文提示\n#endif\n    for (int i = 1; i < argc; ++i) {\n        if (std::string(argv[i]) == \"auto\") {\n            g_auto = true;\n        }\n    }\n\n    // 小数点与 FreeCADCmd 保持一致（照抄 src/Main/MainCmd.cpp 的初始化骨架）\n    setlocale(LC_ALL, \"\");\n#ifdef _WIN32\n    // 窄字符串按 UTF-8 解读，与编译字符集和控制台编码保持一致。\n    setlocale(LC_CTYPE, \".UTF8\");\n#endif\n    setlocale(LC_NUMERIC, \"C\");\n\n    App::Application::Config()[\"ExeName\"] = \"FreeCAD\";\n    App::Application::Config()[\"ExeVendor\"] = \"FreeCAD\";\n    App::Application::Config()[\"AppDataSkipVendor\"] = \"true\";\n    App::Application::Config()[\"RunMode\"] = \"Exit\";\n    App::Application::Config()[\"LoggingConsole\"] = \"1\";\n\n    App::Application::init(argc, argv);\n\n    scene0_typeSystem();\n    auto* doc = App::GetApplication().newDocument(\"Labs\");\n    auto* box = scene1_createObjects(doc);\n    scene2_propertyChain(doc, box);\n    scene3_dependencies(doc, box);\n    scene4_recompute(doc, box);\n    scene5_transaction(doc, box);\n    scene6_persistence(\"debug-labs/FreeCADLabs_output.FCStd\");\n\n    App::GetApplication().closeAllDocuments();\n    App::Application::destruct();\n    std::cout << \"\\nFreeCADLabs 全部场景结束。\\n\";\n    return 0;\n}"}, "appinit": {"title": "应用初始化顺序", "path": "src/App/Application.cpp", "first": 1884, "last": 1930, "text": "void Application::init(int argc, char ** argv)\n{\n    try {\n        // install our own new handler\n#ifdef _MSC_VER // Microsoft compiler\n        _set_new_handler ( freecadNewHandler ); // Setup new handler\n        _set_new_mode( 1 ); // Re-route malloc failures to new handler !\n#else   // Ansi compiler\n        std::set_new_handler (freecadNewHandler); // ANSI new handler\n#endif\n        // if an unexpected crash occurs we can install a handler function to\n        // write some additional information\n#if defined (_MSC_VER) // Microsoft compiler\n        std::signal(SIGSEGV,segmentation_fault_handler);\n        std::signal(SIGABRT,segmentation_fault_handler);\n        std::set_terminate(unhandled_exception_handler);\n           ::set_unexpected(unexpection_error_handler);\n#elif defined(FC_OS_LINUX)\n        std::signal(SIGSEGV,segmentation_fault_handler);\n#endif\n#if defined(FC_SE_TRANSLATOR)\n        _set_se_translator(my_se_translator_filter);\n#endif\n        initTypes();\n\n        initConfig(argc,argv);\n        initApplication();\n    }\n    catch (...) {\n        // force the log to flush\n        destructObserver();\n        throw;\n    }\n}\n\n// clang-format off\nvoid Application::initTypes()\n{\n    // Base types\n    Base::Type                      ::init();\n    Base::BaseClass                 ::init();\n    Base::Exception                 ::init();\n    Base::AbortException            ::init();\n    Base::Persistence               ::init();\n\n    // Complex data classes\n    Data::ComplexGeoData            ::init();"}, "config": {"title": "解释器建立前的注册", "path": "src/App/Application.cpp", "first": 2570, "last": 2605, "text": "    if (!Py_IsInitialized()) {\n        // init python\n        PyImport_AppendInittab (\"FreeCAD\", init_freecad_module);\n        PyImport_AppendInittab (\"__FreeCADBase__\", init_freecad_base_module);\n    }\n    else {\n        // \"import FreeCAD\" in a normal Python 3.12 interpreter would raise\n        //     Fatal Python error: PyImport_AppendInittab:\n        //         PyImport_AppendInittab() may not be called after Py_Initialize()\n        //  because the (external) interpreter is already initialized.\n        //  Therefore we use a workaround as described in https://stackoverflow.com/a/57019607\n\n        PyObject* sysModules = PyImport_GetModuleDict();\n\n        auto moduleName = \"FreeCAD\";\n        PyImport_AddModule(moduleName);\n        ApplicationMethods = Application::Methods;\n        PyObject *pyModule = init_freecad_module();\n        PyDict_SetItemString(sysModules, moduleName, pyModule);\n        Py_DECREF(pyModule);\n\n        moduleName = \"__FreeCADBase__\";\n        PyImport_AddModule(moduleName);\n        pyModule = init_freecad_base_module();\n        PyDict_SetItemString(sysModules, moduleName, pyModule);\n        Py_DECREF(pyModule);\n    }\n\n    std::string pythonpath = Base::Interpreter().init(argc,argv);\n    if (!pythonpath.empty())\n        mConfig[\"PythonSearchPath\"] = pythonpath;\n    else\n        Base::Console().warning(\"Encoding of Python paths failed\\n\");\n\n    // Handle the options that have impact on the init process\n    processProgramOptions(vm, mConfig);"}, "init": {"title": "当前解释器初始化", "path": "src/Base/Interpreter.cpp", "first": 611, "last": 667, "text": "#else\nnamespace\n{\nvoid initInterpreter(int argc, char* argv[])\n{\n    PyStatus status;\n    PyConfig config;\n    PyConfig_InitIsolatedConfig(&config);\n    config.isolated = 0;\n    config.user_site_directory = 1;\n\n    status = PyConfig_SetBytesArgv(&config, argc, argv);\n    if (PyStatus_Exception(status)) {\n        throw Base::RuntimeError(\"Failed to set config\");\n    }\n\n    status = Py_InitializeFromConfig(&config);\n    if (PyStatus_Exception(status)) {\n        throw Base::RuntimeError(\"Failed to init from config\");\n    }\n\n    // If FreeCAD was run from within a Python virtual environment, ensure that the site-packages\n    // directory from that environment is used.\n    const char* virtualenv = getenv(\"VIRTUAL_ENV\");\n    if (virtualenv) {\n        std::wstringstream ss;\n        PyConfig_Read(&config);\n        ss << virtualenv << L\"/lib/python\" << PY_MAJOR_VERSION << \".\" << PY_MINOR_VERSION\n           << \"/site-packages\";\n        PyObject* venvLocation = PyUnicode_FromWideChar(ss.str().c_str(), ss.str().size());\n        PyObject* path = PySys_GetObject(\"path\");\n        PyList_Append(path, venvLocation);\n    }\n\n    PyConfig_Clear(&config);\n\n    Py_Initialize();\n}\n}  // namespace\nstd::string InterpreterSingleton::init(int argc, char* argv[])\n{\n    try {\n        if (!Py_IsInitialized()) {\n            initInterpreter(argc, argv);\n\n            PythonStdOutput::init_type();\n            this->_global = PyEval_SaveThread();\n        }\n        return getPythonPath();\n    }\n    catch (const Exception& e) {\n        e.reportException();\n        throw;\n    }\n}\n#endif\n"}, "singleton": {"title": "管理对象的创建", "path": "src/Base/Interpreter.cpp", "first": 708, "last": 729, "text": "// Singleton:\n\nInterpreterSingleton* InterpreterSingleton::_pcSingleton = nullptr;\n\nInterpreterSingleton& InterpreterSingleton::Instance()\n{\n    // not initialized!\n    if (!_pcSingleton) {\n        _pcSingleton = new InterpreterSingleton();\n    }\n    return *_pcSingleton;\n}\n\nvoid InterpreterSingleton::Destruct()\n{\n    // not initialized or double destruct!\n    assert(_pcSingleton);\n    delete _pcSingleton;\n    _pcSingleton = nullptr;\n}\n\nint InterpreterSingleton::runCommandLine(const char* prompt)"}, "setup": {"title": "核心模块入口", "path": "src/App/Application.cpp", "first": 218, "last": 245, "text": "// This is called via the PyImport_AppendInittab mechanism called\n// during initialization, to make the built-in __FreeCADBase__\n// module known to Python.\nPyMODINIT_FUNC\ninit_freecad_base_module(void)\n{\n    static struct PyModuleDef BaseModuleDef = {\n        PyModuleDef_HEAD_INIT,\n        \"__FreeCADBase__\", Base_doc, -1,\n        nullptr, nullptr, nullptr, nullptr, nullptr\n    };\n    return PyModule_Create(&BaseModuleDef);\n}\n\n// Set in inside Application\nstatic PyMethodDef* ApplicationMethods = nullptr;\n\nPyMODINIT_FUNC\ninit_freecad_module(void)\n{\n    static struct PyModuleDef FreeCADModuleDef = {\n        PyModuleDef_HEAD_INIT,\n        \"FreeCAD\", FreeCAD_doc, -1,\n        ApplicationMethods,\n        nullptr, nullptr, nullptr, nullptr\n    };\n    return PyModule_Create(&FreeCADModuleDef);\n}"}, "setupapp": {"title": "核心模块与包装类型", "path": "src/App/Application.cpp", "first": 271, "last": 317, "text": "void Application::setupPythonTypes()\n{\n    // setting up Python binding\n    Base::PyGILStateLocker lock;\n    PyObject* modules = PyImport_GetModuleDict();\n\n    ApplicationMethods = Application::Methods;\n    PyObject* pAppModule = PyImport_ImportModule (\"FreeCAD\");\n    if (!pAppModule) {\n        PyErr_Clear();\n        pAppModule = init_freecad_module();\n        PyDict_SetItemString(modules, \"FreeCAD\", pAppModule);\n    }\n    Py::Module(pAppModule).setAttr(std::string(\"ActiveDocument\"),Py::None());\n\n    // clang-format off\n    static struct PyModuleDef ConsoleModuleDef = {\n        PyModuleDef_HEAD_INIT,\n        \"__FreeCADConsole__\", Console_doc, -1,\n        Base::ConsoleSingleton::Methods,\n        nullptr, nullptr, nullptr, nullptr\n    };\n    PyObject* pConsoleModule = PyModule_Create(&ConsoleModuleDef);\n\n    // fake Image module\n    PyObject* imageModule = init_image_module();\n    PyDict_SetItemString(modules, \"Image\", imageModule);\n\n    // introducing additional classes\n\n    // NOTE: To finish the initialization of our own type objects we must\n    // call PyType_Ready, otherwise we run into a segmentation fault, later on.\n    // This function is responsible for adding inherited slots from a type's base class.\n    Base::InterpreterSingleton::addType(&Base::VectorPy::Type, pAppModule, \"Vector\");\n    Base::InterpreterSingleton::addType(&Base::MatrixPy::Type, pAppModule, \"Matrix\");\n    Base::InterpreterSingleton::addType(&Base::BoundBoxPy::Type, pAppModule, \"BoundBox\");\n    Base::InterpreterSingleton::addType(&Base::PlacementPy::Type, pAppModule, \"Placement\");\n    Base::InterpreterSingleton::addType(&Base::RotationPy::Type, pAppModule, \"Rotation\");\n    Base::InterpreterSingleton::addType(&Base::AxisPy::Type, pAppModule, \"Axis\");\n\n    // Note: Create an own module 'Base' which should provide the python\n    // binding classes from the base module. At a later stage we should\n    // remove these types from the FreeCAD module.\n\n    PyObject* pBaseModule = PyImport_ImportModule (\"__FreeCADBase__\");\n    if (!pBaseModule) {\n        PyErr_Clear();"}, "appscript": {"title": "运行启动脚本", "path": "src/App/Application.cpp", "first": 2752, "last": 2789, "text": "void Application::initApplication()\n{\n    // interpreter and Init script ==========================================================\n    // register scripts\n    new Base::ScriptProducer( \"CMakeVariables\", CMakeVariables );\n    new Base::ScriptProducer( \"FreeCADInit\",    FreeCADInit    );\n    new Base::ScriptProducer( \"FreeCADTest\",    FreeCADTest    );\n\n    // creating the application\n    if (mConfig[\"Verbose\"] != \"Strict\")\n        Base::Console().log(\"Create Application\\n\");\n    Application::_pcSingleton = new Application(mConfig);\n\n    // set up Unit system default\n    const ParameterGrp::handle hGrp = GetApplication().GetParameterGroupByPath\n       (\"User parameter:BaseApp/Preferences/Units\");\n    Base::UnitsApi::setSchema(hGrp->GetInt(\"UserSchema\", Base::UnitsApi::getDefSchemaNum()));\n    Base::UnitsApi::setDecimals(hGrp->GetInt(\"Decimals\", Base::UnitsApi::getDecimals()));\n    Base::UnitsApi::setDenominator(hGrp->GetInt(\"FracInch\", Base::UnitsApi::getDenominator()));\n\n#if defined (_DEBUG)\n    Base::Console().log(\"Application is built with debug information\\n\");\n#endif\n\n    // starting the init script\n    Base::Console().log(\"Run App init script\\n\");\n    try {\n        Base::Interpreter().runString(Base::ScriptFactory().ProduceScript(\"CMakeVariables\"));\n        Base::Interpreter().runString(Base::ScriptFactory().ProduceScript(\"FreeCADInit\"));\n    }\n    catch (const Base::Exception& e) {\n        e.reportException();\n    }\n\n    // seed randomizer\n    srand(time(nullptr));\n}\n"}, "paths": {"title": "模块依赖目录配置", "path": "src/App/FreeCADInit.py", "first": 46, "last": 72, "text": "    # DLL resolution in Python 3.8 on Windows has changed\n    import sys\n    if sys.platform == 'win32' and hasattr(os, \"add_dll_directory\"):\n        if \"FREECAD_LIBPACK_BIN\" in os.environ:\n            os.add_dll_directory(os.environ[\"FREECAD_LIBPACK_BIN\"])\n        if \"WINDIR\" in os.environ:\n            os.add_dll_directory(os.environ[\"WINDIR\"] + os.sep + \"system32\")\n        for path in PathExtension:\n            os.add_dll_directory(path)\n\n    PathEnvironment = PathExtension.pop(0) + os.pathsep\n    for path in PathExtension:\n        try:\n            PathEnvironment += path + os.pathsep\n        except UnicodeDecodeError:\n            Wrn('Filter invalid module path: u{}\\n'.format(repr(path)))\n\n    # new paths must be prepended to avoid to load a wrong version of a library\n    try:\n        os.environ[\"PATH\"] = PathEnvironment + os.environ[\"PATH\"]\n    except UnicodeEncodeError:\n        Log('UnicodeEncodeError was raised when concatenating unicode string with PATH. Try to replace non-ascii chars...\\n')\n        os.environ[\"PATH\"] = PathEnvironment.encode(errors='replace') + os.environ[\"PATH\"]\n        Log('done\\n')\n    except KeyError:\n        os.environ[\"PATH\"] = PathEnvironment\n"}, "type": {"title": "名字、模块与工厂", "path": "src/Base/Type.cpp", "first": 72, "last": 152, "text": "\nType::instantiationMethod Type::getInstantiationMethod() const\n{\n    assert(typedata.size() >= 1 && \"Type::init() must be called before creating instances\");\n    assert(typedata.size() > index && \"Type index out of bounds\");\n    if (isBad() || typedata.size() <= index) {\n        return nullptr;\n    }\n    return typedata[index]->instMethod;\n}\n\nvoid* Type::createInstance() const\n{\n    const auto method = getInstantiationMethod();\n    return method ? (*method)() : nullptr;\n}\n\nbool Type::canInstantiate() const\n{\n    const auto method = getInstantiationMethod();\n    return method != nullptr;\n}\n\nvoid* Type::createInstanceByName(const char* typeName, bool loadModule)\n{\n    // if not already, load the module\n    if (loadModule) {\n        importModule(typeName);\n    }\n\n    // now the type should be in the type map\n    const Type type = fromName(typeName);\n    // let createInstance handle isBad check\n    return type.createInstance();\n}\n\nvoid Type::importModule(const char* typeName)\n{\n    // cut out the module name\n    const std::string mod = getModuleName(typeName);\n\n    // ignore base modules\n    if (mod == \"App\" || mod == \"Gui\" || mod == \"Base\") {\n        return;\n    }\n\n    // remember already loaded modules\n    if (loadModuleSet.contains(mod)) {\n        return;\n    }\n\n    // lets load the module\n    Interpreter().loadModule(mod.c_str());\n#ifdef FC_LOGLOADMODULE\n    Console().log(\"Act: Module %s loaded through class %s \\n\", mod.c_str(), typeName);\n#endif\n    loadModuleSet.insert(mod);\n}\n\nconst std::string Type::getModuleName(const char* className)\n{\n    std::string_view classNameView(className);\n    auto pos = classNameView.find(\"::\");\n\n    return pos != std::string_view::npos ? std::string(classNameView.substr(0, pos)) : std::string();\n}\n\n\nconst Type Type::createType(const Type parent, const char* name, instantiationMethod method)\n{\n    assert(name && name[0] != '\\0' && \"Type name must not be empty\");\n\n    Type newType;\n    newType.index = static_cast<unsigned int>(Type::typedata.size());\n    Type::typedata.emplace_back(new TypeData(name, newType, parent, method));\n\n    // add to dictionary for fast lookup\n    Type::typemap.emplace(name, newType.getKey());\n\n    return newType;\n}"}, "derived": {"title": "文档类型校验入口", "path": "src/Base/Type.cpp", "first": 238, "last": 249, "text": "const Type Type::getTypeIfDerivedFrom(const char* name, const Type parent, bool loadModule)\n{\n    if (loadModule) {\n        importModule(name);\n    }\n\n    if (const Type type(fromName(name)); type.isDerivedFrom(parent)) {\n        return type;\n    }\n\n    return BadType;\n}"}, "pp": {"title": "导入工具主路径", "path": "src/Base/PyTools.c", "first": 413, "last": 475, "text": "int PP_RELOAD = 0;    /* reload modules dynamically? */\nint PP_DEBUG  = 0;    /* debug embedded code with pdb? */\n\n\nconst char *PP_Init(const char *modname) {\n    Py_Initialize();                               /* init python if needed */\n    if (modname)\n        return modname;\n    /* we assume here that the caller frees allocated memory */\n    return \"__main__\";\n}\n\n\nint\nPP_Make_Dummy_Module(const char *modname)    /* namespace for strings, if no file */\n{                                            /* instead of sharing __main__ for all */\n    PyObject *module = NULL, *dict = NULL;   /* note: __main__ is created in py_init */\n    Py_Initialize();\n    module = PyImport_AddModule(modname);    /* fetch or make, no load */\n    if (module == NULL)                      /* module not incref'd */\n        return -1;\n    /* module.__dict__ */\n    dict = PyModule_GetDict(module);         /* ['__dummy__'] = None */\n    PyDict_SetItemString(dict, \"__dummy__\", Py_None);\n    PyDict_SetItemString(dict, \"__builtins__\", PyEval_GetBuiltins());\n    return 0;\n}\n\n\nPyObject *                          /* returns module object named modname  */\nPP_Load_Module(const char *modname)       /* modname can be \"package.module\" form */\n{                                   /* reload just resets C extension mods  */\n    /*\n     * 4 cases:\n     * - module \"__main__\" has no file, and not prebuilt: fetch or make\n     * - dummy modules have no files: don't try to reload them\n     * - reload=on and already loaded (on sys.modules): \"reload()\" before use\n     * - not loaded yet, or loaded but reload=off: \"import\" to fetch or load\n     */\n\n    PyObject *module = NULL, *sysmods = NULL;\n    modname = PP_Init(modname);                       /* default to __main__ */\n\n    if (strcmp(modname, \"__main__\") == 0)             /* main: no file */\n        return PyImport_AddModule(modname);           /* not increfd */\n\n    sysmods = PyImport_GetModuleDict();               /* get sys.modules dict */\n    module  = PyDict_GetItemString(sysmods, modname); /* mod in sys.modules? */\n\n    if (module != NULL &&                             /* dummy: no file */\n        PyModule_Check(module) &&\n        PyDict_GetItemString(PyModule_GetDict(module), \"__dummy__\")) {\n        return module;                                /* not increfd */\n    }\n    if (PP_RELOAD && module != NULL && PyModule_Check(module)) {\n        module = PyImport_ReloadModule(module);       /* reload file,run code */\n        Py_XDECREF(module);                           /* still on sys.modules */\n        return module;                                /* not increfd */\n    }\n    module = PyImport_ImportModule(modname);          /* fetch or load module */\n    Py_XDECREF(module);                               /* still on sys.modules */\n    return module;                                    /* not increfd */\n}"}, "load": {"title": "持锁导入与异常转换", "path": "src/Base/Interpreter.cpp", "first": 487, "last": 503, "text": "bool InterpreterSingleton::loadModule(const char* psModName)\n{\n    PyObject* module {};\n\n    PyGILStateLocker locker;\n    module = PP_Load_Module(psModName);\n\n    if (!module) {\n        if (PyErr_ExceptionMatches(PyExc_SystemExit)) {\n            throw SystemExitException();\n        }\n\n        throw PyException();\n    }\n\n    return true;\n}"}, "part": {"title": "零件模块入口", "path": "src/Mod/Part/App/AppPart.cpp", "first": 212, "last": 242, "text": "// clang-format off\nPyMOD_INIT_FUNC(Part)\n{\n    // load dependent module\n    try {\n        Base::Interpreter().runString(\"import Materials\");\n    }\n    catch(const Base::Exception& e) {\n        PyErr_SetString(PyExc_ImportError, e.what());\n        PyMOD_Return(nullptr);\n    }\n    Base::Console().log(\"Module: Part\\n\");\n\n    // This is highly experimental and we should keep an eye on it\n    // if we have mysterious crashes\n    // The argument must be 'Standard_False' to avoid FPE caused by\n    // Python's cmath module.\n    // For Linux use segmentation_fault_handler in Application.cpp\n#if !defined(_DEBUG) && !defined(FC_OS_LINUX)\n    //OSD::SetSignal(Standard_False);\n#endif\n\n    PyObject* partModule = Part::initModule();\n    Base::Console().log(\"Loading Part module... done\\n\");\n\n    Py::Object module(partModule);\n    module.setAttr(\"OCC_VERSION\", Py::String(OCC_VERSION_STRING_EXT));\n\n    // C++ exceptions\n    new Base::ExceptionProducer<Part::NullShapeException>;\n    new Base::ExceptionProducer<Part::AttachEngineException>;"}, "partreg": {"title": "原生特征类型登记", "path": "src/Mod/Part/App/AppPart.cpp", "first": 442, "last": 459, "text": "    Part::PrismExtension        ::init();\n\n    Part::Feature               ::init();\n    Part::FeatureExt            ::init();\n    Part::BodyBase              ::init();\n    Part::FeaturePython         ::init();\n    Part::FeatureGeometrySet    ::init();\n    Part::CustomFeature         ::init();\n    Part::CustomFeaturePython   ::init();\n    Part::Primitive             ::init();\n    Part::Box                   ::init();\n    Part::Spline                ::init();\n    Part::Boolean               ::init();\n    Part::Common                ::init();\n    Part::MultiCommon           ::init();\n    Part::Cut                   ::init();\n    Part::Fuse                  ::init();\n    Part::MultiFuse             ::init();"}, "addtype": {"title": "脚本类型登记", "path": "src/Base/Interpreter.cpp", "first": 523, "last": 533, "text": "\nvoid InterpreterSingleton::addType(PyTypeObject* Type, PyObject* Module, const char* Name)\n{\n    // NOTE: To finish the initialization of our own type objects we must\n    // call PyType_Ready, otherwise we run into a segmentation fault, later on.\n    // This function is responsible for adding inherited slots from a type's base class.\n    if (PyType_Ready(Type) < 0) {\n        return;\n    }\n    PyModule_AddObject(Module, Name, Base::getTypeAsObject(Type));\n}"}, "typemacro": {"title": "原生工厂宏", "path": "src/Base/BaseClass.h", "first": 61, "last": 75, "text": "#define TYPESYSTEM_SOURCE_P(_class_) \\\n    Base::Type _class_::getClassTypeId(void) \\\n    { \\\n        return _class_::classTypeId; \\\n    } \\\n    Base::Type _class_::getTypeId(void) const \\\n    { \\\n        return _class_::classTypeId; \\\n    } \\\n    Base::Type _class_::classTypeId = Base::Type::BadType; \\\n    void* _class_::create(void) \\\n    { \\\n        return new _class_(); \\\n    }\n"}, "propertymacro": {"title": "长方体属性宏", "path": "src/App/PropertyContainer.h", "first": 833, "last": 841, "text": "#define PROPERTY_SOURCE(_class_, _parentclass_) \\\nTYPESYSTEM_SOURCE_P(_class_)\\\nconst App::PropertyData * _class_::getPropertyDataPtr(void){return &propertyData;} \\\nconst App::PropertyData & _class_::getPropertyData(void) const{return propertyData;} \\\nApp::PropertyData _class_::propertyData; \\\nvoid _class_::init(void){\\\n  initSubclass(_class_::classTypeId, #_class_ , #_parentclass_, &(_class_::create) ); \\\n  _class_::propertyData.parentPropertyData = _parentclass_::getPropertyDataPtr(); \\\n}"}, "subclass": {"title": "写入类型表", "path": "src/Base/BaseClass.cpp", "first": 77, "last": 93, "text": "void BaseClass::initSubclass(\n    Base::Type& toInit,\n    const char* ClassName,\n    const char* ParentName,\n    Type::instantiationMethod method\n)\n{\n    // don't init twice!\n    assert(toInit.isBad());\n    // get the parent class\n    Base::Type parentType(Base::Type::fromName(ParentName));\n    // forgot init parent!\n    assert(!parentType.isBad());\n\n    // create the new type\n    toInit = Base::Type::createType(parentType, ClassName, method);\n}"}, "box": {"title": "长方体构造与执行", "path": "src/Mod/Part/App/FeaturePartBox.cpp", "first": 36, "last": 81, "text": "PROPERTY_SOURCE(Part::Box, Part::Primitive)\n\n\nBox::Box()\n{\n    ADD_PROPERTY_TYPE(Length, (10.0f), \"Box\", App::Prop_None, \"The length of the box\");\n    ADD_PROPERTY_TYPE(Width, (10.0f), \"Box\", App::Prop_None, \"The width of the box\");\n    ADD_PROPERTY_TYPE(Height, (10.0f), \"Box\", App::Prop_None, \"The height of the box\");\n}\n\nshort Box::mustExecute() const\n{\n    if (Length.isTouched() || Height.isTouched() || Width.isTouched()) {\n        return 1;\n    }\n    return Primitive::mustExecute();\n}\n\nApp::DocumentObjectExecReturn* Box::execute()\n{\n    double L = Length.getValue();\n    double W = Width.getValue();\n    double H = Height.getValue();\n\n    if (L < Precision::Confusion()) {\n        return new App::DocumentObjectExecReturn(\"Length of box too small\");\n    }\n\n    if (W < Precision::Confusion()) {\n        return new App::DocumentObjectExecReturn(\"Width of box too small\");\n    }\n\n    if (H < Precision::Confusion()) {\n        return new App::DocumentObjectExecReturn(\"Height of box too small\");\n    }\n\n    try {\n        // Build a box using the dimension attributes\n        BRepPrimAPI_MakeBox mkBox(L, W, H);\n        TopoDS_Shape ResultShape = mkBox.Shape();\n        this->Shape.setValue(ResultShape, false);\n        return Primitive::execute();\n    }\n    catch (Standard_Failure& e) {\n        return new App::DocumentObjectExecReturn(e.GetMessageString());\n    }"}, "docadd": {"title": "文档创建原生对象", "path": "src/App/Document.cpp", "first": 3085, "last": 3116, "text": "DocumentObject* Document::addObject(const char* sType,\n                                    const char* pObjectName,\n                                    const bool isNew,\n                                    const char* viewType,\n                                    const bool isPartial)\n{\n    const Base::Type type =\n        Base::Type::getTypeIfDerivedFrom(sType, DocumentObject::getClassTypeId(), true);\n    if (type.isBad()) {\n        std::stringstream str;\n        str << \"Document::addObject: '\" << sType << \"' is not a document object type\";\n        throw Base::TypeError(str.str());\n    }\n\n    void* typeInstance = type.createInstance();\n    if (!typeInstance) {\n        return nullptr;\n    }\n\n    auto* pcObject = static_cast<DocumentObject*>(typeInstance);\n    pcObject->setDocument(this);\n\n    _addObject(pcObject,\n               pObjectName,\n               AddObjectOption::SetNewStatus\n                   | (isPartial ? AddObjectOption::SetPartialStatus : AddObjectOption::UnsetPartialStatus)\n                   | (isNew ? AddObjectOption::DoSetup : AddObjectOption::None)\n                   | AddObjectOption::ActivateObject,\n               viewType);\n\n    // return the Object\n    return pcObject;"}, "pyadd": {"title": "脚本调用添加对象", "path": "src/App/DocumentPyImp.cpp", "first": 314, "last": 355, "text": "PyObject* DocumentPy::addObject(PyObject* args, PyObject* kwd)\n{\n    char *sType, *sName = nullptr, *sViewType = nullptr;\n    PyObject* obj = nullptr;\n    PyObject* view = nullptr;\n    PyObject* attach = Py_False;\n    static const std::array<const char*, 7>\n        kwlist {\"type\", \"name\", \"objProxy\", \"viewProxy\", \"attach\", \"viewType\", nullptr};\n    if (!Base::Wrapped_ParseTupleAndKeywords(args,\n                                             kwd,\n                                             \"s|sOOO!s\",\n                                             kwlist,\n                                             &sType,\n                                             &sName,\n                                             &obj,\n                                             &view,\n                                             &PyBool_Type,\n                                             &attach,\n                                             &sViewType)) {\n        return nullptr;\n    }\n\n    DocumentObject* pcFtr = nullptr;\n\n    if (!obj || !Base::asBoolean(attach)) {\n        pcFtr = getDocumentPtr()->addObject(sType, sName, true, sViewType);\n    }\n    else {\n        Base::Type type =\n            Base::Type::getTypeIfDerivedFrom(sType, DocumentObject::getClassTypeId(), true);\n        if (type.isBad()) {\n            std::stringstream str;\n            str << \"'\" << sType << \"' is not a document object type\";\n            throw Base::TypeError(str.str());\n        }\n        pcFtr = static_cast<DocumentObject*>(type.createInstance());\n    }\n    // the type instance could be a null pointer\n    if (!pcFtr) {\n        std::stringstream str;\n        str << \"No document object found of type '\" << sType << \"'\" << std::ends;\n        throw Py::TypeError(str.str());"}, "callback": {"title": "生成的调用边界", "path": "build/msvc-dev/src/App/DocumentPy.cpp", "first": 1205, "last": 1256, "text": "PyObject * DocumentPy::staticCallback_addObject (PyObject *self, PyObject *args, PyObject * kwd)\n{\n    // make sure that not a null pointer is passed\n    if (!self) {\n        PyErr_SetString(PyExc_TypeError, \"descriptor 'addObject' of 'App.Document' object needs an argument\");\n        return nullptr;\n    }\n\n    // test if twin object isn't already deleted\n    if (!static_cast<PyObjectBase*>(self)->isValid()) {\n        PyErr_SetString(PyExc_ReferenceError, \"This object is already deleted most likely through closing a document. This reference is no longer valid!\");\n        return nullptr;\n    }\n\n    // test if object is set Const\n    if (static_cast<PyObjectBase*>(self)->isConst()) {\n        PyErr_SetString(PyExc_ReferenceError, \"This object is immutable, you can not set any attribute or call a non const method\");\n        return nullptr;\n    }\n\n    try { // catches all exceptions coming up from c++ and generate a python exception\n        PyObject* ret = static_cast<DocumentPy*>(self)->addObject(args, kwd);\n        if (ret != nullptr)\n            static_cast<DocumentPy*>(self)->startNotify();\n        return ret;\n    } // Please sync the following catch implementation with PY_CATCH\n    catch(const Base::Exception& e)\n    {\n        e.setPyException();\n        return nullptr;\n    }\n    catch(const std::exception& e)\n    {\n        PyErr_SetString(Base::PyExc_FC_GeneralError, e.what());\n        return nullptr;\n    }\n    catch(const Py::Exception&)\n    {\n        // The exception text is already set\n        return nullptr;\n    }\n#ifndef DONT_CATCH_CXX_EXCEPTIONS\n    catch(...)\n    {\n        PyErr_SetString(Base::PyExc_FC_GeneralError, \"Unknown C++ exception\");\n        return nullptr;\n    }\n#endif\n}\n\n// addProperty() callback and implementer\n// PyObject*  DocumentPy::addProperty(PyObject *args){};"}, "wrapper": {"title": "实际长方体包装", "path": "src/Mod/Part/App/PrimitiveFeature.cpp", "first": 94, "last": 111, "text": "namespace Part\n{\nPYTHON_TYPE_DEF(PrimitivePy, PartFeaturePy)\nPYTHON_TYPE_IMP(PrimitivePy, PartFeaturePy)\n}  // namespace Part\n\n#if defined(__clang__)\n# pragma clang diagnostic pop\n#endif\n\nPyObject* Primitive::getPyObject()\n{\n    if (PythonObject.is(Py::_None())) {\n        // ref counter is set to 1\n        PythonObject = Py::Object(new PrimitivePy(this), true);\n    }\n    return Py::new_reference_to(PythonObject);\n}"}, "props": {"title": "脚本属性写入", "path": "src/App/PropertyContainerPyImp.cpp", "first": 691, "last": 711, "text": "int PropertyContainerPy::setCustomAttributes(const char* attr, PyObject* obj)\n{\n    // search in PropertyList\n    Property* prop = getPropertyContainerPtr()->getPropertyByName(attr);\n    if (prop) {\n        // Read-only attributes must not be set over its Python interface\n        if (prop->testStatus(Property::Immutable)) {\n            std::stringstream s;\n            s << \"Object attribute '\" << attr << \"' is read-only\";\n            throw Py::AttributeError(s.str());\n        }\n\n        FC_TRACE(\"Set property \" << prop->getFullName());\n        prop->setPyObject(obj);\n        return 1;\n    }\n\n    return 0;\n}\n\nPyObject* PropertyContainerPy::renameProperty(PyObject* args) const"}, "quantity": {"title": "读值与输入转换", "path": "src/App/PropertyUnits.cpp", "first": 59, "last": 88, "text": "PyObject* PropertyQuantity::getPyObject()\n{\n    return new QuantityPy(new Quantity(_dValue, _Unit));\n}\n\nBase::Quantity PropertyQuantity::createQuantityFromPy(PyObject* value)\n{\n    Base::Quantity quant;\n\n    if (PyUnicode_Check(value)) {\n        quant = Quantity::parse(PyUnicode_AsUTF8(value));\n    }\n    else if (PyFloat_Check(value)) {\n        quant = Quantity(PyFloat_AsDouble(value), _Unit);\n    }\n    else if (PyLong_Check(value)) {\n        quant = Quantity(double(PyLong_AsLong(value)), _Unit);\n    }\n    else if (PyObject_TypeCheck(value, &(QuantityPy::Type))) {\n        Base::QuantityPy* pcObject = static_cast<Base::QuantityPy*>(value);\n        quant = *(pcObject->getQuantityPtr());\n    }\n    else {\n        std::string error = std::string(\"wrong type as quantity: \");\n        error += value->ob_type->tp_name;\n        throw Base::TypeError(error);\n    }\n\n    return quant;\n}"}, "constraint": {"title": "单位与约束", "path": "src/App/PropertyUnits.cpp", "first": 182, "last": 209, "text": "void PropertyQuantityConstraint::setPyObject(PyObject* value)\n{\n    Base::Quantity quant = createQuantityFromPy(value);\n\n    double temp = quant.getValue();\n    if (_ConstStruct) {\n        if (temp > _ConstStruct->UpperBound) {\n            temp = _ConstStruct->UpperBound;\n        }\n        else if (temp < _ConstStruct->LowerBound) {\n            temp = _ConstStruct->LowerBound;\n        }\n    }\n    quant.setValue(temp);\n\n    if (quant.isDimensionless()) {\n        PropertyFloat::setValue(quant.getValue());  // clazy:exclude=skipped-base-method\n        return;\n    }\n\n    if (_Unit != quant.getUnit()) {\n        throw Base::UnitsMismatchError(\"Not matching Unit!\");\n    }\n\n    PropertyFloat::setValue(quant.getValue());  // clazy:exclude=skipped-base-method\n}\n\n// ------------------------------------------------------"}, "float": {"title": "尺寸的真正写入", "path": "src/App/PropertyStandard.cpp", "first": 1020, "last": 1025, "text": "void PropertyFloat::setValue(double lValue)\n{\n    aboutToSetValue();\n    _dValue = lValue;\n    hasSetValue();\n}"}, "setattro": {"title": "属性槽进入原生方法", "path": "src/Base/PyObjectBase.cpp", "first": 356, "last": 388, "text": "int PyObjectBase::__setattro(PyObject *obj, PyObject *attro, PyObject *value)\n{\n    const char *attr{};\n    attr = PyUnicode_AsUTF8(attro);\n\n    //Hint: In general we don't allow one to delete attributes (i.e. value=0). However, if we want to allow\n    //we must check then in _setattr() of all subclasses whether value is 0.\n    if (!value) {\n        PyErr_Format(PyExc_AttributeError, \"Cannot delete attribute: '%s'\", attr);\n        return -1;\n    }\n    if (!static_cast<PyObjectBase*>(obj)->isValid()){\n        PyErr_Format(PyExc_ReferenceError, \"Cannot access attribute '%s' of deleted object\", attr);\n        return -1;\n    }\n\n#ifdef ATTR_TRACKING\n    // If an attribute references this as parent then reset it\n    // before setting the new attribute\n    PyObject* cur = static_cast<PyObjectBase*>(obj)->getTrackedAttribute(attr);\n    if (cur) {\n        if (PyObject_TypeCheck(cur, &(PyObjectBase::Type))) {\n            PyObjectBase* base = static_cast<PyObjectBase*>(cur);\n            base->resetAttribute();\n            static_cast<PyObjectBase*>(obj)->untrackAttribute(attr);\n        }\n    }\n#endif\n\n    int ret = static_cast<PyObjectBase*>(obj)->_setattr(attr, value);\n#ifdef ATTR_TRACKING\n    if (ret == 0) {\n        static_cast<PyObjectBase*>(obj)->startNotify();"}, "genattr": {"title": "生成的属性分派", "path": "build/msvc-dev/src/App/PropertyContainerPy.cpp", "first": 1212, "last": 1255, "text": "int PropertyContainerPy::_setattr(const char *attr, PyObject *value) // __setattr__ function: note only need to handle new state\n{\n    try {\n        // setter for special Attributes (e.g. dynamic ones)\n        int r = setCustomAttributes(attr, value);\n        // r = 1: handled\n        // r = -1: error\n        // r = 0: ignore\n        if (r == 1)\n            return 0;\n        else if (r == -1)\n            return -1;\n    } // Please sync the following catch implementation with PY_CATCH\n    catch(const Base::Exception& e)\n    {\n        e.setPyException();\n        return -1;\n    }\n    catch(const std::exception& e)\n    {\n        PyErr_SetString(Base::PyExc_FC_GeneralError, e.what());\n        return -1;\n    }\n    catch(const Py::Exception&)\n    {\n        // The exception text is already set\n        return -1;\n    }\n#ifndef DONT_CATCH_CXX_EXCEPTIONS\n    catch(...)\n    {\n        PyErr_SetString(Base::PyExc_FC_GeneralError, \"Unknown C++ exception\");\n        return -1;\n    }\n#endif\n\n    return PersistencePy::_setattr(attr, value);\n}\n\nPropertyContainer *PropertyContainerPy::getPropertyContainerPtr() const\n{\n    return static_cast<PropertyContainer *>(_pcTwinPointer);\n}\n"}, "gil": {"title": "锁的作用域管理", "path": "src/Base/Interpreter.h", "first": 184, "last": 235, "text": "class BaseExport PyGILStateLocker\n{\npublic:\n    PyGILStateLocker()\n    {\n        gstate = PyGILState_Ensure();  // NOLINT\n    }\n    ~PyGILStateLocker()\n    {\n        PyGILState_Release(gstate);\n    }\n\n    PyGILStateLocker(const PyGILStateLocker&) = delete;\n    PyGILStateLocker(PyGILStateLocker&&) = delete;\n    PyGILStateLocker& operator=(const PyGILStateLocker&) = delete;\n    PyGILStateLocker& operator=(PyGILStateLocker&&) = delete;\n\nprivate:\n    PyGILState_STATE gstate;\n};\n\n/**\n * If a thread holds the global interpreter lock (GIL) but runs a long operation\n * in C where it doesn't need to hold the GIL it can release it temporarily. Or\n * if the thread has to run code in the main thread where Python code may be\n * executed it must release the GIL to avoid a deadlock. In either case the thread\n * must hold the GIL when instantiating an object of PyGILStateRelease.\n * As PyGILStateLocker it's best to create an instance of PyGILStateRelease on the\n * stack.\n */\nclass BaseExport PyGILStateRelease\n{\npublic:\n    PyGILStateRelease()\n    {\n        // release the global interpreter lock\n        state = PyEval_SaveThread();  // NOLINT\n    }\n    ~PyGILStateRelease()\n    {\n        // grab the global interpreter lock again\n        PyEval_RestoreThread(state);\n    }\n\n    PyGILStateRelease(const PyGILStateRelease&) = delete;\n    PyGILStateRelease(PyGILStateRelease&&) = delete;\n    PyGILStateRelease& operator=(const PyGILStateRelease&) = delete;\n    PyGILStateRelease& operator=(PyGILStateRelease&&) = delete;\n\nprivate:\n    PyThreadState* state;\n};"}, "run": {"title": "字符串代码执行", "path": "src/Base/Interpreter.cpp", "first": 231, "last": 268, "text": "std::string InterpreterSingleton::runString(const char* sCmd)\n{\n    PyObject* module {};\n    PyObject* dict {};\n    PyObject* presult {};\n\n    PyGILStateLocker locker;\n    module = PP_Load_Module(\"__main__\"); /* get module, init python */\n    if (!module) {\n        throw PyException(); /* not incref'd */\n    }\n    dict = PyModule_GetDict(module); /* get dict namespace */\n    if (!dict) {\n        throw PyException(); /* not incref'd */\n    }\n\n\n    presult = PyRun_String(sCmd, Py_file_input, dict, dict); /* eval direct */\n    if (!presult) {\n        if (PyErr_ExceptionMatches(PyExc_SystemExit)) {\n            throw SystemExitException();\n        }\n\n        PyException::throwException();\n        return {};  // just to quieten code analyzers\n    }\n\n    PyObject* repr = PyObject_Repr(presult);\n    Py_DECREF(presult);\n    if (repr) {\n        std::string ret(PyUnicode_AsUTF8(repr));\n        Py_DECREF(repr);\n        return ret;\n    }\n\n    PyErr_Clear();\n    return {};\n}"}, "invalidate": {"title": "原生对象析构", "path": "src/App/DocumentObject.cpp", "first": 84, "last": 97, "text": "DocumentObject::~DocumentObject()\n{\n    if (!PythonObject.is(Py::_None())) {\n        Base::PyGILStateLocker lock;\n        // Remark: The API of Py::Object has been changed to set whether the wrapper owns the passed\n        // Python object or not. In the constructor we forced the wrapper to own the object so we\n        // need not to dec'ref the Python object any more. But we must still invalidate the Python\n        // object because it need not to be destructed right now because the interpreter can own\n        // several references to it.\n        Base::PyObjectBase* obj = static_cast<Base::PyObjectBase*>(PythonObject.ptr());\n        // Call before decrementing the reference counter, otherwise a heap error can occur\n        obj->setInvalid();\n    }\n}"}, "invalidptr": {"title": "包装失效操作", "path": "src/Base/PyObjectBase.h", "first": 268, "last": 278, "text": "    void setInvalid() {\n        // first bit is not set, i.e. invalid\n        StatusBits.reset(Valid);\n        clearAttributes();\n        _pcTwinPointer = nullptr;\n    }\n\n    bool isValid() {\n        return StatusBits.test(Valid);\n    }\n"}, "proxy": {"title": "原生重算调用脚本", "path": "src/App/FeaturePython.cpp", "first": 72, "last": 103, "text": "bool FeaturePythonImp::execute()\n{\n    FC_PY_CALL_CHECK(execute)\n    Base::PyGILStateLocker lock;\n    try {\n        if (has__object__) {\n            Py::Object res = Base::pyCall(py_execute.ptr());\n            if (res.isBoolean() && !res.isTrue()) {\n                return false;\n            }\n            return true;\n        }\n        else {\n            Py::Tuple args(1);\n            args.setItem(0, Py::Object(object->getPyObject(), true));\n            Py::Object res = Base::pyCall(py_execute.ptr(), args.ptr());\n            if (res.isBoolean() && !res.isTrue()) {\n                return false;\n            }\n            return true;\n        }\n    }\n    catch (Py::Exception&) {\n        if (PyErr_ExceptionMatches(PyExc_NotImplementedError)) {\n            PyErr_Clear();\n            return false;\n        }\n        Base::PyException::throwException();  // extract the Python error text\n    }\n\n    return false;\n}"}, "finalize": {"title": "解释器结束", "path": "src/Base/Interpreter.cpp", "first": 681, "last": 690, "text": "void InterpreterSingleton::finalize()\n{\n    try {\n        PyEval_RestoreThread(this->_global);\n        cleanupModules();\n        Py_Finalize();\n    }\n    catch (...) {\n    }\n}"}, "destruct": {"title": "应用结束次序", "path": "src/App/Application.cpp", "first": 1707, "last": 1726, "text": "    cleanupUnits();\n#endif\n\n    CleanupProcess::callCleanup();\n\n    // not initialized or double destruct!\n    assert(_pcSingleton);\n    delete _pcSingleton;\n\n    // We must detach from console and delete the observer to save our file\n    destructObserver();\n\n    Base::Interpreter().finalize();\n\n    Base::ScriptFactorySingleton::Destruct();\n    Base::InterpreterSingleton::Destruct();\n    Base::Type::destruct();\n    ParameterManager::Terminate();\n    SafeMode::Destruct();\n}"}, "methodtable": {"title": "脚本方法的地址与参数约定", "path": "build/msvc-dev/src/App/DocumentPy.cpp", "first": 137, "last": 145, "text": "    {\"addObject\",\n        reinterpret_cast<PyCFunction>(reinterpret_cast<void (*) ()>( staticCallback_addObject )),\n        METH_VARARGS|METH_KEYWORDS,\n        \"addObject(type, name=None, objProxy=None, viewProxy=None, attach=False, viewType=None)\\n\"\n        \"\\n\"\n        \"Add an object to document\\n\"\n        \"\\n\"\n        \"type (String): the type of the document object to create.\\n\"\n        \"name (String): the optional name of the new object.\\n\""}, "objectbase": {"title": "包装基类与原生指针", "path": "src/Base/PyObjectBase.h", "first": 164, "last": 205, "text": "class BaseExport PyObjectBase : public PyObject //NOLINT\n{\n    /** Py_Header struct from python.h.\n     *  Every PyObjectBase object is also a python object. So you can use\n     *  every Python C-Library function also on a PyObjectBase object\n     */\n    Py_Header\n\n    enum Status {\n        Valid = 0,\n        Immutable = 1,\n        Notify = 2,\n        NoTrack = 3\n    };\n\nprotected:\n    /// destructor\n    virtual ~PyObjectBase();\n\n    /// Overrides the pointer to the twin object\n    void setTwinPointer(void* ptr) {\n        _pcTwinPointer = ptr;\n    }\n\npublic:\n    /** Constructor\n     *  Sets the Type of the object (for inheritance) and decrease the\n     *  the reference count of the PyObject.\n     */\n    PyObjectBase(void*, PyTypeObject *T);\n    /// Wrapper for the Python destructor\n    static void PyDestructor(PyObject *P)   // python wrapper\n    {  delete ((PyObjectBase *) P);  }\n    /// incref method wrapper (see python extending manual)\n    PyObjectBase* IncRef() {Py_INCREF(this);return this;}\n    /// decref method wrapper (see python extending manual)\n    PyObjectBase* DecRef() {Py_DECREF(this);return this;}\n\n    /// Get the pointer of the twin object\n    void* getTwinPointer() const {\n        return _pcTwinPointer;\n    }"}, "ownership": {"title": "自动管理包装的引用规则", "path": "src/3rdParty/PyCXX/CXX/Python3/Objects.hxx", "first": 153, "last": 193, "text": "        void set( PyObject *pyob, bool owned = false )\n        {\n            release();\n            p = pyob;\n            if( !owned )\n            {\n                Py::_XINCREF( p );\n            }\n            validate();\n        }\n\n        void release()\n        {\n            Py::_XDECREF( p );\n            p = NULL;\n        }\n\n        void validate();\n\n    public:\n        // Constructor acquires new ownership of pointer unless explicitly told not to.\n        explicit Object( PyObject *pyob=Py::_None(), bool owned = false )\n        : p( pyob )\n        {\n            if( !owned )\n            {\n                Py::_XINCREF( p );\n            }\n            validate();\n        }\n\n        // Copy constructor acquires new ownership of pointer\n        Object( const Object &ob )\n        : p( ob.p )\n        {\n            Py::_XINCREF( p );\n            validate();\n        }\n\n        // Assignment acquires new ownership of pointer\n        Object &operator=( const Object &rhs )"}, "getattro": {"title": "读取属性时检查包装有效性", "path": "src/Base/PyObjectBase.cpp", "first": 290, "last": 313, "text": "PyObject* PyObjectBase::__getattro(PyObject * obj, PyObject *attro)\n{\n    const char *attr{};\n    attr = PyUnicode_AsUTF8(attro);\n\n    // For the __class__ attribute get it directly as with\n    // ExtensionContainerPy::getCustomAttributes we may get\n    // the wrong type object (#0003311)\n    if (streq(attr, \"__class__\")) {\n        PyObject* res = PyObject_GenericGetAttr(obj, attro);\n        if (res) {\n            return res;\n        }\n    }\n\n    // This should be the entry in Type\n    PyObjectBase* pyObj = static_cast<PyObjectBase*>(obj);\n    if (!pyObj->isValid()){\n        PyErr_Format(PyExc_ReferenceError, \"Cannot access attribute '%s' of deleted object\", attr);\n        return nullptr;\n    }\n\n#ifdef ATTR_TRACKING\n    // If an attribute references this as parent then reset it (bug #0002902)"}}</script><script type="application/json" id="step-data">[["初始化已完成", "主函数 → 场景零", "运行库已建立并释放初始化线程的锁；原生基础类型存在，零件类型尚未登记。", "main", "解释器：已建立\n零件缓存：未导入", "基础类型：已登记\n长方体：未登记", "尚无本次实例"], ["提出创建请求", "\"Part::Box\", true → createInstanceByName", "入口允许加载模块，先进入导入，再做类型查找。", "type", "解释器：已建立", "长方体：未登记", "请求类型：Part::Box"], ["拆出模块名", "类型名 → \"Part\"", "取首个双冒号之前的模块名；检查核心模块和已加载集合。", "type", "解释器：已建立", "loadModuleSet：尚无 Part", "尚无实例"], ["持锁调用导入", "loadModule → PP_Load_Module", "作用域对象取得解释器锁。工具中的兼容初始化不会重建已有解释器。", "load", "当前线程：持解释器锁", "长方体：未登记", "尚无实例"], ["标准导入找到扩展", "PyImport_ImportModule → Part.pyd", "按模块查找规则选择扩展加载器，进入系统装载与符号解析。", "pp", "目标：Part.pyd\n加载器：扩展文件加载器", "长方体：未登记", "尚无实例"], ["进入原生模块入口", "初始化函数地址 → PyInit_Part", "运行库调用原生入口。入口先导入材质依赖，随后构建模块对象。", "part", "模块对象：M 正在初始化", "长方体：未登记", "尚无实例"], ["登记原生长方体", "PyInit_Part → Part::Box::init", "父类型已经登记。宏生成的登记函数把名称和工厂地址交给基础层。", "partreg", "模块对象：M 正在初始化", "开始登记：Part::Box\n工厂：F = &Part::Box::create", "尚无实例"], ["直接写入原生类型表", "createType → typemap 与 typedata", "这一步就是问题的答案：原生函数修改原生容器，并返回新类型编号。", "type", "模块对象：M 正在初始化", "typemap[\"Part::Box\"] = k\ntypedata[k].instMethod = F", "尚无实例"], ["导入返回", "模块新引用 → 工具减引用 → 借用指针", "成功导入后模块缓存继续持有 M。工具释放本次新引用，返回借用指针。", "pp", "sys.modules[\"Part\"] → M", "长方体：已登记", "尚无实例"], ["记录已加载", "loadModule 成功 → loadModuleSet.insert", "异常路径不会走到这个插入；成功返回后才记录本工程的已加载模块。", "type", "模块对象：M 在缓存中", "loadModuleSet 含 Part\n类型编号：k", "尚无实例"], ["查表得到工厂", "fromName → typedata[k].instMethod", "没有把模块对象转成长方体；这里重新查的是工程自己的原生表。", "type", "模块对象：M 在缓存中", "名称 → k → 工厂 F", "即将调用工厂"], ["工厂创建对象", "F() → new Part::Box()", "工厂调用构造函数，初始化尺寸等属性，返回原生对象 B。", "box", "模块对象：M 在缓存中", "原生登记保留", "实例 B：Part::Box\n本次尚未加入文档"], ["场景零结束", "临时实例 → delete", "原实验只借临时实例触发登记，随即删除。类型表和模块缓存仍保留，供后续场景使用。", "main", "模块对象：M 在缓存中", "长方体：仍已登记", "临时实例 B 已删除"]]</script><script type="application/json" id="chapter-data">[{"key": "answer", "title": "先回答你的三个问题", "lead": "跟随一次导入，找到真正写入原生类型表的那条语句。", "text": "\n   解释器在哪里建立？  主函数调用应用初始化，在配置初始化阶段进入  Py_InitializeFromConfig 。场景零开始时，解释器已经存在。    模块怎样加载？  导入系统找到  Part.pyd ，取得导出函数  PyInit_Part  的地址并调用。这个入口就是编译好的原生代码。    原生数据为何会改变？  模块入口调用  Part::Box::init() ，最终由  Type::createType  直接修改当前进程的原生类型表。   \n 这里没有两个进程之间的通信，也没有把脚本类型表自动翻译成原生类型表。主程序、解释器动态库、零件扩展库都在同一进程内；各层交接的是函数调用、对象指针、字符串和明确的所有权责任。 \n 特别留意返回值： PP_Load_Module  返回模块对象指针； loadModule  成功返回真； Type::importModule  没有返回类型数据。真正让原生表改变的是导入过程中的初始化行为，不能在返回值里寻找一份“传回来的注册表”。   \n 字符串类型名 → 模块名 → 扩展库入口 → 类型登记 → 工厂函数指针 → 原生对象 \n"}, {"key": "baseline", "title": "阅读范围与实测基线", "lead": "区分当前工程事实、运行观测和教学推演。", "text": "\n 本页依据当前提交  95f7f66c935a0def0f0565518a7339731c797006 ，核验日期为  2026 年 11 月 5 日 。实验入口是  debug-labs/cpp/LabsMain.cpp 。沿用参考教材的连续阅读和源码对照方式，专门讲解混合编程机制，没有左侧章节栏。 \n     项目  核验结果  调试时的意义      实际启动配置   .vscode/launch.json  →  build/msvc-dev/bin/FreeCADLabs.exe   旧说明中的构建目录不适用于当前配置。    构建方式  带调试信息的发布配置；生成器为 Ninja  部分函数可能内联，变量可能被优化。    解释器版本  3.12.10，64 位； python312.lib / python312.dll   按当前初始化分支讲解，底层源码固定到对应版本。    增量构建  已进入微软编译环境，成功构建原实验目标  未修改业务源码，未重新配置构建。    原生实验  自动模式完整结束；类型由未登记变为  Part::Box   运行结果已验证，细分调用顺序由源码分析得到。    绑定验证  另用工程命令行程序验证模块、包装身份、量值与失效  它与原生实验是两个独立进程，不能拼成同一次执行。     \n 图中的  M、W、B、F  是示意符号，代表模块、包装对象、业务对象和工厂函数，均非实际地址。源码按钮嵌入本次工程文件的原文，脱机也能查看。行号仅对应本次版本，工程更新后应先按函数名核对。 \n 实验说明中的“全程不跑脚本”只能理解为场景由原生调用驱动。应用启动实际执行内嵌启动脚本，零件入口也会执行导入材质模块的语句。  "}, {"key": "memory", "title": "先把进程中的对象分开", "lead": "相同的“对象”二字，可能属于完全不同的管理层。", "text": "\n   应用与模型  Document / Box  文档管理业务对象；属性持有尺寸与形状。   ↔   绑定与包装  PrimitivePy  保存原生指针，通过函数槽转发操作。   ↔   解释器运行库  PyInterpreterState  组织模块、命名空间、执行状态和异常。   \n  解释器不是一个后台控制台窗口。 它是链接进当前进程的运行库与状态。原生程序可以进入它的接口执行代码，再同步返回，不必启动独立的脚本进程，也不必打开交互终端。 \n     名称  真实含义  不要混淆       InterpreterSingleton   工程的管理单例，构造时只把  _global  设为空  管理对象构造不等于运行库初始化。     PyInterpreterState   解释器上下文，模块与内置对象等状态归它管理  导入一个模块不等于新建一个解释器。     PyThreadState   关联解释器的线程执行状态   _global  实际是这种指针，不是全局变量字典。     PyObject*   脚本对象的统一接口指针  不能把任意原生类指针强转成它。     PyTypeObject   脚本类型对象，包含属性访问、调用、析构等函数槽  与原生工厂的类型登记不同。     Base::Type   工程类型编号的轻量封装  编号索引到原生类型资料，不携带解释器。      \n 嵌入解释器解决“主程序如何调用脚本”；扩展模块解决“脚本如何调用原生能力”。本工程同时使用两者，所以一次调用可以从原生程序进入导入系统，再回到原生模块入口。 官方嵌入说明 、 接口总览 。 "}, {"key": "startup", "title": "解释器从无到有：启动顺序", "lead": "先登记入口，再建立运行库，最后准备应用可见的模块内容。", "text": "  LabsMain::main\n  App::Application::init(argc, argv)\n    initTypes()                         // 原生基础类型\n    initConfig(argc, argv)\n      PyImport_AppendInittab(\"FreeCAD\", init_freecad_module)\n      PyImport_AppendInittab(\"__FreeCADBase__\", init_freecad_base_module)\n      Base::Interpreter().init(argc, argv)\n        initInterpreter(argc, argv)\n          PyConfig_InitIsolatedConfig\n          PyConfig_SetBytesArgv\n          Py_InitializeFromConfig\n          PyConfig_Clear\n          Py_Initialize                // 已初始化时不再创建\n        PythonStdOutput::init_type\n        _global = PyEval_SaveThread()\n    initApplication()\n      new Application(...)\n        setupPythonTypes()\n      runString(CMakeVariables)\n      runString(FreeCADInit)\n  scene0_typeSystem()  \n 管理对象的创建与解释器的创建是两件事 \n  Base::Interpreter()  取得管理单例。真正的  init()  检查  Py_IsInitialized()  后，才决定是否初始化运行库。外部脚本进程已经建立运行库后再导入核心模块，会走复用已有解释器的分支；你的原生实验走的是自己建立解释器的路径。   \n 初始化配置究竟控制什么 \n 本版本先用隔离配置填入默认值，再显式把  isolated  改为零、用户安装目录开关设为一。不能只看函数名就说它完全隔离，也不能推断所有普通解释器默认值都恢复了。参数经配置接口传入，最终配置参与建立路径、标准模块与执行环境。 PyConfig_Clear  释放配置资源，不会销毁解释器。 \n 运行库内部由  Py_InitializeFromConfig  组织运行时、核心和主环境初始化。核心流程创建解释器状态和首个线程状态，建立解释器锁，初始化基础对象、内置模块和导入系统；主环境阶段继续完成标准流和主模块等环境。“创建解释器”具体就是分配并连接这些原生状态。 初始化入口 、 解释器与首线程 、 配置接口 。 \n 为什么后面仍遇到初始化调用 \n 初始化辅助函数末尾和  PP_Init  都会调用  Py_Initialize ；已经初始化时这个兼容入口直接返回，不清空模块缓存，也不建立第二个解释器。要捕获首次创建，应在配置初始化处设断点。 \n 初始化后，管理对象通过  PyEval_SaveThread  保存当前线程状态并释放解释器锁。之后包括主线程在内，操作脚本对象时都需要按工程约定重新持锁。 \n"}, {"key": "builtin", "title": "核心模块与扩展模块的两种入口", "lead": "一个入口来自显式登记，另一个入口来自动态库导出符号。", "text": "\n  PyImport_AppendInittab  登记“模块名 → 初始化函数指针”。它告诉导入系统以后怎样创建核心模块，尚未执行入口，更不是登记长方体。应用构造随后调用  setupPythonTypes ，设置  ApplicationMethods  并导入核心模块，入口用  PyModule_Create  建立模块对象。  \n     登记位置  登记内容  什么时候发挥作用      内置模块入口表   FreeCAD → init_freecad_module   解释器建立前登记，实际导入时调用。    模块方法表  方法名称、回调地址、参数约定  创建模块时成为脚本可调用对象。    原生类型表   Part::Box → 编号 → &Part::Box::create   零件模块初始化时登记，创建模型时使用。    脚本模块字典   Part.Shape → 脚本类型对象   发布给脚本属性查询。     \n 核心模块入口名称可以不是  PyInit_FreeCAD ，因为函数地址已经显式登记。磁盘上的  Part.pyd  则需要按约定查找  PyInit_Part ；工程宏  PyMOD_INIT_FUNC(Part)  正是生成这个导出入口。语言链接与导出声明确保运行库能按名称找到它。 \n 启动脚本会扫描模块目录、补充搜索路径并执行各目录的初始化脚本。扫描目录不代表已经导入每一个二进制扩展；本次场景零开始时，长方体仍未登记。  \n 本实验链接了零件扩展库，系统可能在主函数运行前已映射该库。动态库映射、解释器调用模块入口、工程登记类型是三个不同动作。调试器模块列表出现零件库，不证明类型已经登记。 "}, {"key": "import", "title": "逐层拆解你的调用链", "lead": "每一层完成不同职责，返回值也承担不同含义。", "text": "     层  主要动作  结果       createInstanceByName   允许加载时先导入，再查类型、调用工厂  返回原生实例指针。     Type::importModule   从类型名前缀取模块名，跳过核心模块及已记录模块  成功后记录到  loadModuleSet 。     loadModule   取得解释器锁，调用导入工具  成功返回真，失败抛原生异常。     PP_Load_Module   区分主模块、虚拟模块、重载和普通导入  普通成功路径返回借用模块指针。     PyImport_ImportModule   标准导入，使用缓存或查找并初始化模块  成功返回新引用；失败返回空并设置异常。     \n 当前源码顺序是  loadModule=true  时先调用导入，再调用  fromName 。集合让重复调用快速返回，但不能改述为“先查类型，缺失时才调用导入”。 \n 导入工具默认  PP_RELOAD=0 。主模块走  PyImport_AddModule ，这个接口只取得或建立模块容器，不执行同名文件。普通零件模块走真正的导入接口；取得新引用后在工具内部减去一次，依赖模块缓存继续持有对象，再把借用指针返回。这个包装函数改变了标准接口的引用合同。  \n 原实验注释还有一处简化：当前  Document::addObject  实际调用  getTypeIfDerivedFrom(..., true) ，校验继承关系后调用  createInstance() ，并未直接调用  createInstanceByName 。两条路线共用导入与工厂机制。  \n"}, {"key": "loader", "title": "从模块名字走到机器指令", "lead": "关键跨越是拿到初始化函数地址并调用。", "text": "\n 本次实测模块来源是  build/msvc-dev/Mod/Part/Part.pyd ，加载器类型为  ExtensionFileLoader 。导入先受模块缓存影响；需要查找文件时，查找器、模块规格和加载器合作，根据路径及扩展名确定原生扩展。 \n  PyImport_ImportModule(\"Part\")\n  导入系统：缓存检查、查找器、模块规格、加载器\n    ExtensionFileLoader.create_module(spec)\n      _imp.create_dynamic(spec)\n        _PyImport_LoadDynamicModuleWithSpec(spec, ...)\n          _PyImport_FindSharedFuncptrWindows(\"PyInit\", \"Part\", 路径, ...)\n            LoadLibraryExW(扩展文件完整路径, ...)\n            GetProcAddress(库句柄, \"PyInit_Part\")\n          _PyImport_InitFunc_TrampolineCall(入口指针)\n            PyInit_Part()                // 回到工程原生代码\n    ExtensionFileLoader.exec_module(module)\n      _imp.exec_dynamic(module)\n  返回模块对象的新引用  \n 这份工程返回完整模块对象，属于传统单阶段初始化路线，主要注册发生在创建模块时调用入口的阶段。不能笼统地说扩展一定在执行阶段才注册，也不能把多阶段模块的执行槽套到这里。上图略去缓存、锁、审计和错误分支，表示首次普通导入的主路径。 扩展加载器 、 入口调用 。 \n 系统装载器映射动态库、解析依赖；运行库再查导出函数。实验已原生链接零件库，装载同一库时通常复用映像；是否新映射不改变后续调用入口的必要性。 动态装载实现 。 \n     查找层  查什么  排查方向      脚本模块搜索   Part.pyd 、脚本文件或包  检查  sys.path 、模块规格及来源。    系统动态库搜索  扩展依赖的解释器和几何内核等库  模块文件存在仍可能装载失败，要查依赖目录与二进制兼容性。      启动配置的环境路径帮助主程序装载直接依赖；启动脚本也用  os.add_dll_directory  添加扩展依赖目录。两层搜索不能互相替代。 "}, {"key": "registration", "title": "类型登记：到底哪一行改了原生数据", "lead": "注册的核心是名称、父类型、编号与创建函数地址。", "text": "\n 模块入口先导入材质依赖，建立模块对象、异常及脚本类型，随后登记原生特征。原始体登记在长方体之前，满足父类型必须存在的条件。  \n 长方体使用  PROPERTY_SOURCE(Part::Box, Part::Primitive) 。它包含原生类型系统宏，还连接属性元数据。下列是教学展开，省略其他声明，不是要求添加的实现：  \n  // 工厂创建原生对象；登记时仅保存它的地址。\nvoid* Part::Box::create()\n{\n    return new Part::Box();\n}\n\n// 宏为本类型生成的登记流程。\nvoid Part::Box::init()\n{\n    // 1. 登记名称、继承关系与工厂。\n    initSubclass(classTypeId, \"Part::Box\", \"Part::Primitive\", &Part::Box::create);\n    // 2. 连接父类属性元数据。\n    propertyData.parentPropertyData = Part::Primitive::getPropertyDataPtr();\n}  \n  initSubclass  核对尚未登记、查找父类型，再调用  Type::createType 。后者用数组长度作为编号，把新  TypeData  放进  typedata ，向  typemap  写入名称到编号的映射。返回的编号赋给类的静态类型成员。  \n     位置  示意内容  作用       typemap    \"Part::Box\" → k   名称转索引。     typedata[k]   名称、父类型、类型编号、 instMethod=F   提供继承判断与实例化入口。     classTypeId   类型编号  k   类和实例查询工程类型。    工厂地址  F    &Part::Box::create   被调用时才执行构造。     \n 登记不等于创建模型。导入返回后，工厂入口查询这张表并调用函数指针，才进入长方体构造函数。场景零的临时对象没有加入文档，随后被删除；场景一的对象交给文档管理。  \n 这张表属于基础库，零件扩展通过链接的基础接口调用同一个登记函数。原生数据由原生代码直接修改，解释器只是触发了模块初始化。把基础实现错误地静态复制进多个扩展可能造成多份全局表，但那不是当前工程的正常架构。 \n"}, {"key": "walk", "title": "交互推演：一次首次创建", "lead": "逐步观察调用、传参，以及本步骤改变的持有者。", "text": "\n 这是按源码整理的教学推演，不是实时调试器。地址均为符号示意。先观察当前动作，再去本步源码设断点。 \n         当前交接         运行库与模块      原生类型系统      本次实例       上一步  下一步  回到开头  跳到步骤     查看本步源码   回到开头只重置教学演示，不影响真实工程。  \n"}, {"key": "objects", "title": "脚本对象怎样指向原生对象", "lead": "类型登记建立工厂；包装建立对实例的访问通道。", "text": "\n 脚本调用  doc.addObject(\"Part::Box\", \"Box\")  时，文档包装的方法表把名称映射到生成的静态回调。回调校验包装有效性，进入手写的  DocumentPy::addObject ，解析参数并调用原生文档方法。原生对象创建并归入文档后，包装层调用它的虚函数  getPyObject() 。   \n 具体包装类型很重要：长方体继承原始体的实现，调用  Part::Primitive::getPyObject() 。首次创建  PrimitivePy(this) ，缓存到  PythonObject ；以后返回同一包装对象的新引用。本次  type(box)  是  PrimitivePy ， box.TypeId  却是  Part::Box ，说明包装类型与原生类型不是一一对应。 \n  脚本变量 box ──强引用──→ 包装对象 W：PrimitivePy\n                              │ _pcTwinPointer\n                              ▼\n文档对象集合 ──管理──→ 原生对象 B：Part::Box\n                              │ PythonObject（包装引用）\n                              └───────────────────→ W\n\nW 的脚本类型 → PrimitivePy::Type → 基类包装的属性槽与方法表\nB 的工程类型 → Part::Box::classTypeId → 原生类型表  \n 这不是复制整个模型到脚本堆。包装保留原生指针，操作由绑定代码转发；但具体属性返回值可以是新对象，不能把所有返回值概括成共享引用。 \n 包装代码如何产生  工程的包装描述文件、生成器和手写实现相互配合。生成文件提供类型槽、方法表、入口与异常边界；手写的  *PyImp.cpp  执行业务访问。当前生成结果在构建目录，源目录中没看到它，不代表这里使用了自动识别任意原生类的反射机制。 \n 原生虚函数表与脚本类型的函数槽也不同。调用  getPyObject()  使用原生虚分派；脚本访问属性则通过脚本类型槽进入包装。两者由显式生成和手写逻辑连接。 \n"}, {"key": "property", "title": "一次尺寸赋值的数据全程", "lead": "从脚本值到原生属性，再进入修改通知与几何业务。", "text": "  box.Length = \"2 cm\"\n  脚本属性赋值机制\n    PyObjectBase::__setattro(包装, \"Length\", 脚本字符串)\n      包装类 _setattr 继承分派\n        PropertyContainerPy::setCustomAttributes\n          getPropertyByName(\"Length\")\n          PropertyQuantityConstraint::setPyObject\n            createQuantityFromPy → 原生量值\n            范围与单位检查\n            PropertyFloat::setValue(20.0)\n              aboutToSetValue()\n              _dValue = 20.0\n              hasSetValue()  \n 属性槽收到的仍是  PyObject* 。容器按名称找到属性，再虚分派到它的转换函数。长方体尺寸是长度属性，接受字符串、整数、浮点或量值包装，转成原生量值并处理约束与单位。实测  \"2 cm\"  写入后内部数值为 20 毫米。     \n 真正写入是  _dValue = lValue ，前后由属性通知包围。通知继续进入容器、文档事务和特征回调。解释器不会自己发现字段变化，也不会自动替原生字段建立撤销或依赖传播。 \n 读取属性不一定得到活引用   PropertyQuantity::getPyObject  从当前数值与单位构造新的量值。因此  q = box.Length  后，把长方体长度设为 30， q.Value  仍是原来的 20。这已由本次探针验证。 \n     操作  路线  区别       box.Length = 20   包装 → 转换 → 原生写入  脚本入口承担输入类型、单位和范围规则。     box->Length.setValue(20)   直接进入原生属性写入  绕过脚本转换，仍执行属性前后通知。     q = box.Length   具体属性构造返回值  长度返回独立量值，不是尺寸字段引用。     doc.recompute()   文档依赖调度与特征执行  赋值完成不等于完整文档重算完成。      本实验长方体对普通尺寸变化会对象级自算，但文档表达式与依赖调度仍是另一层职责。既要看调用哪个接口，也要看特征如何响应通知。 "}, {"key": "abi", "title": "从对象布局到调用约定", "lead": "统一对象指针如何变成正确的原生函数调用。", "text": "\n 统一对象头解决“这是什么” \n 常规运行库对象包含引用计数信息和类型指针。类型指针指向描述行为的脚本类型对象：怎样访问属性、能否调用、怎样释放。整数、字符串、模块和扩展包装都能通过统一指针交给接口，但具体数据布局不同，所以转换前需要类型判断或使用带错误检查的转换接口。 \n 一般扩展结构使用  PyObject_HEAD  引入对象头；本工程的包装基类则直接继承  PyObject ，再由自己的构造和析构配合管理。通过  PyObject*  看它时操作的是脚本对象接口；通过合法的包装类型转换后，才访问  _pcTwinPointer  指向的模型。不要假定包装指针与模型指针数值相等，更不能从脚本  id(box)  推出原生长方体地址。 \n 方法表解决“调用哪个地址” \n 文档包装方法表中，名称  addObject  对应生成的  staticCallback_addObject ，同时标注位置参数与关键字参数约定。运行库按这个约定准备自身、参数元组与关键字字典，再进入静态入口。静态入口取得文档包装，调用手写成员实现。函数指针存在并不足以正确调用；参数约定必须一致。  \n  脚本：doc.addObject(\"Part::Box\", \"Box\")\n  方法查找：名称 → 回调地址 + 参数约定\n  self：文档的脚本包装指针\n  args：(\"Part::Box\", \"Box\") 这个参数元组\n  kwd：关键字参数字典，或空指针\n    ↓\n  静态回调 → DocumentPy::addObject(args, kwd)\n    ↓ 参数解析\n  sType：指向类型名的字符串\n  sName：指向对象名的字符串\n    ↓\n  getDocumentPtr()->addObject(sType, sName, ...)  \n 解析格式中的  s  表示字符串转换， |  表示后续可选参数， O  接收对象指针， O!  还要求指定类型。当前入口把类型名、可选名字、代理对象和布尔参数等逐项解析，解析失败返回空并保留异常。借用得到的字符串或对象不能脱离参数生命周期保存；需要长期保存时应复制原生字符串或明确持有脚本引用。 \n 数据转换是显式代码 \n     脚本数据  常见原生接口  注意的边界      整数   PyLong_AsLong   原生整数范围可能更小，溢出是错误；当前长度转换代码也使用这个接口。    浮点   PyFloat_AsDouble   转换结果与错误状态一起检查。    字符串   PyUnicode_AsUTF8   返回的缓冲区依附对象，不是需要自行释放的新字符串。    元组、字典  参数接口或容器接口  容器持有元素引用；取出、插入的引用责任依具体接口而定。    模型包装  类型校验 → 包装指针 → 原生指针  先保证包装有效，再使用活模型。    返回原生数值  构造脚本数字或量值对象  转换出的是返回对象，不是自动把原生栈变量暴露给脚本。     \n 模块也不是一个原生名字空间的自动镜像。它有脚本字典，字典保存名称到脚本对象的引用；方法表和类型登记代码主动把能力发布进去。只有被发布的成员可经脚本查到，任意原生静态变量不会自行出现在模块里。 \n"}, {"key": "references", "title": "引用计数：管理的是引用责任", "lead": "先说清谁负责释放，再看计数变化；不要靠一个数字猜所有权。", "text": "\n 新引用表示调用方取得一份强引用责任，最终必须释放或转交。借用引用表示没有得到这份责任，不能擅自减计数；想跨越所有者的生命周期保留它，就先取得自己的强引用。偷取引用表示接口接管调用方已有的那份责任。它们描述的是合同，不是指针是否指向新分配对象。 \n     接口或操作  成功时的责任  当前链条中的处理       PyImport_ImportModule   新引用  普通导入工具内部释放一次。     PP_Load_Module   当前包装函数返回借用引用   loadModule  不再减计数。     PyImport_AddModule   借用引用  不会因获取主模块而新增释放责任。     PyModule_GetDict   借用引用  字典由模块持有，使用时必须保证模块仍存在。     PyDict_GetItemString   借用引用  读取缓存项不转移所有权。     PyObject_GetAttrString   新引用  即使取到原有属性，也要释放这份引用。     PyObject_CallObject   成功返回新引用  调用结果使用完需要释放。     getPyObject()   工程约定向调用方提供新引用  可以是同一缓存包装对象增加引用，而非每次新建。     PyModule_AddObject   成功时偷取值的引用  失败时不能按成功转交处理。     PyTuple_SetItem   偷取传入项的引用  不要再按借用接口的方式释放该项。     \n 在零件普通导入里，标准接口返回  M  的新引用；模块缓存仍持有它；工具减去本次获得的引用，再把指针借给调用方。这样解释了为何减计数后还能返回指针，也说明这段写法依赖缓存持有条件，不能当成任意对象通用模板。  导入接口合同 、 模块接口合同 。 \n 工程的自动管理包装  本工程常见  Py::Object(ptr, true)  表示接管已有的新引用；从借用指针构造普通包装会按其接口建立自身引用。 Py::new_reference_to  给返回者一份新引用。阅读时必须核对具体构造函数约定，不能凭布尔值名字猜。实际原始体包装创建后就由自动管理对象接管，再以新引用形式返回。 \n 把引用计数当成“变量个数”会误判：容器、缓存和临时对象也持有引用；3.12 还存在不会按普通方式增减的永久对象。 Py_DECREF  可能触发对象析构和用户代码，因而也是一次可能重入的调用边界。 引用计数规则 。 \n"}, {"key": "calls", "title": "原生侧主动调用脚本：两条路线", "lead": "执行文本与调用对象共享同一解释器，但输入、命名空间和返回规则不同。", "text": "\n 路线一：编译并执行字符串   runString  持锁取得主模块，借用模块字典，把它同时作为全局和局部命名空间传给  PyRun_String(..., Py_file_input, dict, dict) 。这会把语句文本编译为代码对象并执行。顶层赋值写入该字典，函数定义产生函数对象，导入语句继续调用导入机制。 \n 普通语句执行的结果不是最后一行表达式的值。 runString  返回的是执行结果的文本表示，通常为  \"None\" 。要取表达式结果，应看  runStringObject  使用的  Py_eval_input ，或者从明确的对象接口取值。文件输入、单个表达式与交互输入是不同编译模式，不能互换。 \n 路线二：构造参数并调用可调用对象  当数据来自变量，应优先传对象，而不是拼接语句文本。下面是放在“应用初始化后、结束前”的局部教学片段，需要工程已有的解释器头文件和脚本包装类型。片段不改动现有实验，未作为新增原生目标编译。 \n  // 1. 先取得解释器锁；它必须比下方对象更晚析构。\nBase::PyGILStateLocker lock;\n\n// 2. 导入模块，并接管标准接口返回的新引用。\nPyObject* rawModule = PyImport_ImportModule(\"math\");\nif (!rawModule) {\n    throw Base::PyException();\n}\nPy::Object module(rawModule, true);\n\n// 3. 取得函数和参数。局部包装在锁释放前结束。\nPyObject* rawFunction = PyObject_GetAttrString(module.ptr(), \"sqrt\");\nif (!rawFunction) {\n    throw Base::PyException();\n}\nPy::Object function(rawFunction, true);\nPy::TupleN arguments(Py::Float(144.0));\n\n// 4. 调用并接管结果，再按明确类型转换。\nPyObject* rawResult = PyObject_CallObject(function.ptr(), arguments.ptr());\nif (!rawResult) {\n    throw Base::PyException();\n}\nPy::Object result(rawResult, true);\ndouble answer = PyFloat_AsDouble(result.ptr());\nif (PyErr_Occurred()) {\n    throw Base::PyException();\n}\n// answer 的期望值为 12.0；这里只保留原生数值。  \n 上面每个取得新引用的操作都立即交给自动管理对象，失败转换为原生异常。作用域退出时先销毁结果、参数、函数和模块包装，最后释放锁。若把脚本对象包装放到锁的外层，即使函数调用时持锁，析构时仍可能在无锁状态减引用。 \n 再深入一层：可调用对象可能是脚本函数，也可能是扩展函数。前者进入解释器帧与字节码求值，后者经调用约定直接进入原生函数地址。所以“调用脚本接口”不代表一定执行一段脚本字节码。 扩展函数与调用约定 。 \n"}, {"key": "errors", "title": "异常如何穿过语言边界", "lead": "错误标志与返回值是一对合同，原生异常不能任意穿过运行库边界。", "text": "\n 多数返回对象的运行库接口失败时返回空，并在当前线程的解释器状态中保留异常。原生调用方需要同时理解这两个信号。不能把空指针当成普通空结果继续使用，也不能设置了异常后又返回一个成功对象。数值转换接口的错误值可能与正常值相同，必须按合同检查异常状态。 \n     方向  实际处理  本次源码依据      导入失败 → 原生调用者  导入接口返回空； loadModule  区分退出异常，其余转为  Base::PyException       原生文档方法失败 → 脚本调用者  生成回调捕获原生异常，设置脚本异常，再返回空      原生属性转换失败 → 脚本赋值  属性分派捕获异常，设置脚本异常，再返回错误状态      脚本特征执行失败 → 原生重算  执行桥读取解释器异常并转换，再由特征流程处理       \n  Base::PyException  读取并清理解释器中的异常信息，将类型、消息、回溯等用于原生处理。调试时，先查看运行库失败返回处的异常，再查看转换后的原生异常；转换完成后原始异常槽可能已经清空，不能据此认定从未出错。 \n 异常分类用异常类型或错误枚举，例如  PyErr_ExceptionMatches ；错误消息供人阅读，不应用消息子串决定程序分支。底层调用已经设定明确异常时，清理自己的资源并传播即可，不要随意覆盖成无上下文的通用错误。 解释器异常合同 。 \n"}, {"key": "threads", "title": "线程状态与解释器锁", "lead": "锁保护解释器访问；它不自动保护整个模型业务。", "text": "\n 初始化线程释放解释器锁后， loadModule 、 runString  等入口使用  PyGILStateLocker 。构造调用  PyGILState_Ensure ，析构调用  PyGILState_Release ；局部对象既保证正常返回配对，也保证异常退出配对。它还能处理线程所需的运行库关联状态，不是单纯给一个整数加锁。 \n 进入零件入口时已持锁，入口再调用脚本导入材质模块，形成嵌套调用。工程使用的作用域锁记录进入前状态，因此嵌套结束不会把外层需要的锁无条件释放。代码在一次同步调用中多次穿过边界，不需要排队给另一个“解释器线程”。 \n 什么时候可以暂时释放   PyGILStateRelease  在已持锁前提下保存线程状态并释放锁，析构时恢复。适用情况是耗时的纯原生计算，且这段区间不访问脚本对象、不改引用、不触发脚本回调。不能只看到几何计算就立即释放：若沿途可能经属性通知回调脚本，必须先审查整条路径。 \n 解释器锁并不保证文档、几何对象和界面线程安全。即使线程可以安全调用运行库，也仍要遵守工程的文档线程约定。常见死锁是主线程持解释器锁等待工作线程，而工作线程正在等待同一把锁进入脚本回调。 \n 本页讨论实际使用的常规 3.12 构建。不要把本工程的单例管理方式直接推广到多个子解释器，也不要把较新无全局锁构建的行为套过来。工程的进程级静态类型表、静态脚本类型和缓存引用需要专门设计，不能仅通过多建解释器就获得隔离。 线程状态与解释器锁 。 \n"}, {"key": "lifetime", "title": "生命周期：有脚本引用不等于模型还活着", "lead": "脚本包装与原生业务对象的销毁由不同机制控制。", "text": "\n 文档管理长方体，脚本引用管理包装对象。关闭文档后，原生对象可以销毁，但脚本变量仍持有包装。原生文档对象析构因此主动调用  setInvalid() ，清理跟踪属性并把原生指针置空。包装属性入口检查有效性后抛引用失效异常，阻止继续访问已经删除的模型。  \n 本次实测：文档打开时两次取同名对象得到同一个包装；关闭文档后，旧变量访问长度抛出  ReferenceError 。这比“脚本引用计数保证原生对象存在”更准确。几何值或独立量值等其他包装可能有不同所有权，必须逐类看实现，不能由文档对象推断所有包装都不拥有原生对象。 \n 退出次序也属于正确性  原实验先关闭所有文档，再进入应用销毁。应用销毁流程清理应用状态与观察者，调用解释器结束，再销毁管理单例和原生类型表。解释器结束函数恢复保存的线程状态，进行模块清理并调用  Py_Finalize 。  \n 仍有后台线程调用解释器、静态包装在结束后才减引用、回调仍指向已销毁模型，都会让退出阶段成为错误发生点。不能把重复初始化/结束解释器当成扩展模块热重载；运行库与第三方扩展的进程级状态未必能完整重建。 \n"}, {"key": "callback", "title": "进阶：原生重算反过来执行脚本特征", "lead": "同一个模型调度可以跨边界回调，再把结果写回原生属性。", "text": "\n 普通长方体在原生  execute()  中建模；脚本特征则把实现对象保存在代理属性。重算进入  FeaturePythonT::execute ，再调用  FeaturePythonImp::execute 。后者持锁，通过已保存的可调用对象执行代理方法；常用分支把当前原生对象的包装作为参数传入。 \n  原生文档重算\n  → 脚本特征的原生 execute\n  → 代理执行桥取得解释器锁\n  → 调用代理的 execute(obj)\n  → 脚本调用 Part.makeBox(...)\n  → 原生几何算法生成形状\n  → 脚本执行 obj.Shape = ...\n  → 属性包装转换\n  → 原生形状属性写入与通知\n  → 返回原生重算调度  \n 下列练习展示一次完整回路，在独立临时文档中执行。它与本页已验证的普通长方体探针不同，属于供你逐步调试的练习。代理只负责生成结果，不在属性变化回调里递归重算文档。 \n  import FreeCAD as App\nimport Part\n\n# 代理只实现几何生成，文档继续持有模型对象。\nclass CubeLogic:\n    def execute(self, obj):\n        size = obj.Length.Value\n        obj.Shape = Part.makeBox(size, size, size)\n\ndoc = App.newDocument(\"CallbackLesson\")\nobj = doc.addObject(\"Part::FeaturePython\", \"Cube\")\nobj.addProperty(\"App::PropertyLength\", \"Length\")\nobj.Length = 12\nobj.Proxy = CubeLogic()\ndoc.recompute()\nprint(obj.Shape.Volume)       # 期望 1728\nApp.closeDocument(doc.Name)  \n 当前桥中，代理显式返回假表示没有处理，可继续走父类实现；普通无返回值的方法返回空值对象，按已处理计算。还有绑定代理对象的另一种调用约定，以及未实现异常的专门分支。学习时先掌握常用的传模型参数路线，再对照源码理解这些明确分支，不能把所有“返回空”当成执行失败。 \n 设计这类混合特征时，原生层继续拥有文档身份、属性和调度，脚本层实现可替换算法。数据通过明确参数与属性写回，不通过比较前后字段去猜变化来源。 \n"}, {"key": "debug", "title": "把教材变成一次可重复的调试", "lead": "按阶段一次设置足够的断点，不需要反复碰运气。", "text": "\n 先使用当前“FreeCAD-Labs”启动配置。它停在入口，因此能捕获解释器首次建立。若从场景零才开始调试，初始化断点已经错过。先禁用无关热点断点，进入对应阶段后再启用下面的一组。 \n     阶段  断点位置  到达时检查什么      初始化   Application.cpp:2570 、 Interpreter.cpp:650 / 627 / 657   是否已经初始化；最终配置；保存的线程状态。    场景零开始   Type.cpp:95 / 108   类型名、模块名、已加载集合。    进入导入   Interpreter.cpp:487 、 PyTools.c:442 / 472   当前线程、锁作用域、模块指针和失败分支。    回到扩展   AppPart.cpp:213 / 452 ，或函数断点  PyInit_Part   依赖导入完成后是否到达长方体登记。    写类型表   BaseClass.cpp:77 、 Type.cpp:140   名称、父类型、创建函数地址，以及新插入的表项。    真正构造   Type.cpp:82 、 FeaturePartBox.cpp:39   工厂地址；构造完成的原生对象指针。    脚本包装   PrimitiveFeature.cpp:104   首次创建包装、缓存包装、原生指针与类型。    脚本赋值   PyObjectBase.cpp:356 、 PropertyContainerPyImp.cpp:691 、 PropertyUnits.cpp:182 、 PropertyStandard.cpp:1020   脚本值的类型、属性指针、转换值、实际存储位置。    销毁   DocumentObject.cpp:84 、 PyObjectBase.h:268   原生对象销毁时包装是否还被脚本持有；指针何时清空。     \n 原生实验场景零只触发创建链，不会自动经过全部脚本属性入口。后面那些断点需要运行脚本探针或交互执行对应赋值。不要因为原生  setValue  没命中脚本转换函数就认为绑定失效。 \n 查看变量时的边界  优先查看已有局部变量和容器内容。调试器表达式求值可能执行函数：调用导入、增加引用或取脚本属性都可能改变状态，甚至在无锁线程暂停时导致等待。需要调用运行库接口验证时，应在明确持锁的程序位置执行，不在任意暂停点强行调用。 \n 类型登记频繁，可在登记函数用名称条件只关注长方体；也可先在零件登记行停住，再单步进入。构建有优化时，宏生成函数可能没有独立可绑定的行，按函数名或进入具体写表语句更可靠。解释器动态库若没有对应调试符号，仍可在工程的导入前与模块入口后设置两端断点；深入运行库逐行调试需要匹配 3.12.10 的符号和源文件，不能只拿最新版源码对行号。 \n"}, {"key": "labs", "title": "从入门到熟练：六组验证练习", "lead": "每个练习都先预测，再看断点与数据；不要只背最后输出。", "text": "\n  一 · 创建时机  在配置初始化之前、应用初始化之后分别观察运行库状态。为什么导入工具中再次初始化不清空模块？   核对解释  首次配置初始化建立运行库；后续兼容初始化在已初始化状态直接返回。管理单例构造与运行库创建不同。   \n  二 · 注册与创建分离  场景零分别停在长方体登记与构造位置。哪个时刻有工厂地址？哪个时刻才有实例？   核对解释  登记后表里已有创建函数指针，但尚无本次实例。回到工厂调用后才进入构造；场景零随后主动删除临时实例。   \n  三 · 再次导入  重复同类型创建，观察工程已加载集合与模块缓存。模块入口是否再次执行？   核对解释  正常第二次调用被工程集合跳过；直接重复标准导入也通常命中模块缓存。这两层缓存不是一张表。不要删除缓存后推断能可靠重跑原生初始化。   \n  四 · 值与身份  对比  doc.getObject(\"Box\") is box  与“保存量值后改变长度”。为什么前者保持对象身份，后者不随模型变化？   核对解释  模型缓存包装对象并返回新引用；长度读取构造独立量值。相同的读取语法不代表相同的数据传递方式。   \n  五 · 转换与错误  在临时文档把长度赋为  \"2 s\" ，观察单位转换异常如何回到脚本；再比较原生负尺寸写入与脚本负尺寸写入。   核对解释  秒与长度单位不匹配，转换层抛异常，由生成入口转回脚本。当前长度脚本入口会约束负值，而原生浮点写入没有这一步；模型算法随后仍有自己的有效性检查。两种失败不能混同。   \n  六 · 活包装与已删除模型  保留脚本变量，关闭文档后再访问。怎样证明错误来自原生生命周期结束，而非模块被卸载？   核对解释  在原生对象析构与包装失效处观察；包装仍被变量引用，模块也仍在缓存中，但原生指针已经清空，属性入口因此报引用失效。   \n"}, {"key": "troubleshoot", "title": "故障定位与工程边界", "lead": "按失败发生的层定位，避免把所有问题都归结为“解释器没加载”。", "text": "     现象  先查哪一层  应收集的证据      初始化就失败  运行库与标准库部署  真实动态库、版本、位数、配置路径、标准库编码模块是否存在。    找不到模块  模块查找  模块名、搜索路径、查找器结果、目标文件路径。    模块文件存在但装载失败  系统依赖  依赖库是否可解析、二进制位数、解释器小版本、调试与发布运行库是否匹配。    导入成功但类型仍不存在  模块初始化与登记  是否导入同名其他模块、实际文件来源、入口是否登记该类型、类型名是否正确。    重复初始化断言  缓存与重复登记  是否手动调用入口、移除缓存、混用多个基础库实例。    包装存在但属性访问失败  原生生命周期  文档是否关闭、包装是否失效、是否仍保存旧模型引用。    修改数值但形状不符  模型通知与重算  输入是否转换成功、通知是否到达、对象与文档重算阶段、算法错误。    偶发崩溃或退出卡死  引用、锁与线程  借用引用是否越界、析构是否持锁、是否重入、线程退出与解释器结束顺序。     \n 需要增加诊断时，一次覆盖完整边界：主进程与运行库版本、模块请求名与实际文件、入口开始与返回、注册名称与工厂地址、对象与包装地址、属性输入类型与转换值、异常类型、线程与生命周期事件。诊断使用事件发生时的真实数据，不靠事后对比猜来源。本次未修改业务代码加入日志。 \n 进一步掌握时要能解释的限制 \n 脚本类型登记通过  PyType_Ready  补全继承槽，再把类型发布到模块；原生登记则保存工厂和父类型。这两条路线可以发生在同一个模块入口，却不能合并成一个“注册动作”。 \n 单阶段扩展与静态类型容易依赖进程级状态。多个解释器、模块卸载、热更新和并行调用都需要重新审查所有权。公共稳定接口也不等于任意扩展能跨解释器小版本通用；使用完整类型布局的扩展必须匹配其编译与运行条件。 \n 绑定生成器和自动管理包装减少重复代码，但不能代替你决定模型归属、值拷贝语义、异常映射与线程合同。真正能独立排查混合编程问题，意味着你能指出每个边界传递的类型、持有者、引用责任，以及失败返回时留下的状态。 \n"}, {"key": "evidence", "title": "本次验证记录与继续阅读", "lead": "把已观测结果与机制解释放在一起核对。", "text": "     验证项  实际结果      运行库版本  3.12.10 (tags/v3.12.10:0cc8128, Apr 17 2025, 11:11:39) [MSC v.1943 64 bit (AMD64)]    实际进程   C:\\Users\\adminstrator\\source\\FreeCAD\\build\\msvc-dev\\bin\\FreeCADCmd.exe     导入前零件模块缓存  未存在    模块文件   C:\\Users\\adminstrator\\source\\FreeCAD\\build\\msvc-dev\\Mod\\Part\\Part.pyd     加载器  ExtensionFileLoader    重复导入同一模块  是    原生类型 / 脚本包装类型   Part::Box / PrimitivePy     重复查询同一包装  是    带单位字符串写入  2 厘米 → 内部长度 20 毫米    旧量值 / 新模型长度  20 / 30    重算后体积  3000 立方毫米    关闭文档后读取   ReferenceError: Cannot access attribute 'Length' of deleted object      \n 原生实验已经完整跑过全部场景，结束时读回长度 30、体积 4500。它还验证了场景零类型查询由未登记变为长方体。上面的绑定探针另开进程，仅验证包装与数据转换，体积 3000 不应与原生实验最终文档的体积混为一谈。 \n  展开本次绑定探针完整代码   # 读取当前进程并验证对象包装、属性转换和失效行为。\nimport sys\nimport json\nimport importlib\nimport FreeCAD as App\n\nresult = {\"python\": sys.version, \"executable\": sys.executable,\n          \"part_before\": \"Part\" in sys.modules, \"path\": sys.path}\nimport Part\nresult[\"part_file\"] = Part.__file__\nresult[\"part_loader\"] = type(Part.__loader__).__name__\nresult[\"same_module\"] = importlib.import_module(\"Part\") is Part\ndoc = App.newDocument(\"BindingProbe\")\nbox = doc.addObject(\"Part::Box\", \"Box\")\nresult[\"native_type\"] = box.TypeId\nresult[\"wrapper_type\"] = str(type(box))\nresult[\"same_wrapper\"] = doc.getObject(\"Box\") is box\nbox.Length = \"2 cm\"\nresult[\"length_mm\"] = box.Length.Value\nquantity = box.Length\nbox.Length = 30\nresult[\"old_quantity_value\"] = quantity.Value\nresult[\"current_length_value\"] = box.Length.Value\ndoc.recompute()\nresult[\"volume\"] = box.Shape.Volume\nApp.closeDocument(doc.Name)\ntry:\n    result[\"after_close\"] = box.Length.Value\nexcept Exception as error:\n    result[\"after_close_error\"] = type(error).__name__\n    result[\"after_close_message\"] = str(error)\nwith open(r\"C:\\Users\\adminstrator\\source\\FreeCAD\\build\\python-core-guide\\probe-result.json\", \"w\", encoding=\"utf-8\") as output:\n    json.dump(result, output, ensure_ascii=False, indent=2)\nprint(\"PROBE_COMPLETED\")   \n  展开原生实验的运行输出   FreeCAD 1.1.4, Libs: 1.1.4R45044 (Git)\n\n============ 场景 0 | 类型系统（FC01/FC05） ============\n断点：src/Base/Type.cpp:140  Type::createType\n启动即查 fromName(\"Part::Box\") -> BadType（Part 模块还没初始化，类型表里没有它！）\n\n>>> 场景 0：createInstanceByName(\"Part::Box\", true) —— 断点 Type.cpp:95/108/139\n>>> （回车继续）\n再查 fromName(\"Part::Box\") -> Part::Box\n沿 getParent() 上溯继承链（对照 FC03 第三节的容器继承表）：\n  Part::Box\n  Part::Primitive\n  Part::Feature\n  App::GeoFeature\n  App::DocumentObject\n  App::TransactionalObject\n  App::ExtensionContainer\n  App::PropertyContainer\n  Base::Persistence\n  Base::BaseClass\n\n============ 场景 1 | 创建长方体的两条路径（FC01/FC04） ============\n断点：src/App/Document.cpp:3085  Document::addObject\n\n>>> 场景 1：路径 A —— 字符串 \"Part::Box\" 查类型表创建\n>>> （回车继续）\n\n>>> 场景 1：路径 B —— new Part::Box + addObject(box, \"Box001\")\n>>> （回车继续）\nRecompute......\n\t\t\t\t\t\t(50 %)\t\n\t\t\t\t\t\t(100 %)\t\n\t\t\t\t\t\t\t\t\ngetPropertyByName(\"Length\")->getValue() = 10  （统一访问：无需 Part::Box*）\nbox  体积 = 1000\nbox2 体积 = 1000\n\n============ 场景 2 | 属性主链：Length.setValue(20)（FC03） ============\n断点：PropertyStandard.cpp:1020 → Property.cpp:299/284 →\n      DocumentObject.cpp:889 → FeaturePartBox.cpp:228 → :54\n\n>>> 场景 2：原生 setValue(20.0)（区别于脚本路径的 setPyObject）\n>>> （回车继续）\n改前 Length = 10，体积 = 1000\n改后 Length = 20，体积 = 2000（期望 2000）\n\n>>> 场景 2 反例：原生 setValue 不做范围钳制（FC03§4 末尾的提醒）\n>>> （回车继续）\nLength.getValue() = -5  ← 原样写入了 -5！execute 随即报 \"too small\"，\n    体积仍 = 2000（算法拒绝，旧形状保留）\nundo 后 Length = 20，体积 = 2000\n\n============ 场景 3 | 引用属性与依赖图（FC04/FC03§12） ============\n断点：src/App/PropertyLinks.cpp:730  PropertyLink::setValue\n\n>>> 场景 3：先改 Length=30 并创建圆柱与 Cut\n>>> （回车继续）\n\n>>> 场景 3：cut.Base/cut.Tool 赋值（PropertyLink::setValue 断点）\n>>> （回车继续）\nRecompute......\n\t\t\t\t\t\t(25 %)\t\n\t\t\t\t\t\t(50 %)\t\n\t\t\t\t\t\t(75 %)\t\n\t\t\t\t\t\t(100 %)\t\n\t\t\t\t\t\t\t\t\ncut 的 OutList（我引用谁）: Box Cylinder \nbox 的 InList（谁引用我）: Cut \ncut 体积 = 2968.58（3000 - 31.42：圆柱默认立在原点，盒子也在原点角，\n  只有圆柱的 1/8 落进盒内——pi*2^2*20/8。想切完整的孔，\n  可给圆柱设置 Placement 把它挪到盒子中心）\n\n============ 场景 4 | 两级重算 + 表达式（FC03§9/§13） ============\n断点：Document.cpp:2692/3008、PropertyExpressionEngine.cpp:692、\n      DocumentObject.cpp:297（mustRecompute，Enforce 已置位）\n\n>>> 场景 4：setExpression(Width = Length / 2)\n>>> （回车继续）\nRecompute......\n\t\t\t\t\t\t(25 %)\t\n\t\t\t\t\t\t(50 %)\t\n\t\t\t\t\t\t(75 %)\t\n\t\t\t\t\t\t(100 %)\t\n\t\t\t\t\t\t\t\t\nWidth = 15（= 30/2），体积 = 4500（期望 4500）\n\n>>> 场景 4：Length.setValue(40) —— 立即自算用的是旧 Width！\n>>> （回车继续）\n赋值瞬间体积 = 6000（40*15*10 = 6000：旧 Width）\nRecompute......\n\t\t\t\t\t\t(25 %)\t\n\t\t\t\t\t\t(50 %)\t\n\t\t\t\t\t\t(75 %)\t\n\t\t\t\t\t\t(100 %)\t\n\t\t\t\t\t\t\t\t\nrecompute 后 Width = 20，体积 = 8000（期望 8000）\n\n============ 场景 5 | 事务：撤销/重做（FC09） ============\n断点：Document.cpp:157/405、Transactions.cpp:177/388、\n      PropertyStandard.cpp:1076（Paste）\n\n>>> 场景 5：openTransaction → 改长度 → commitTransaction\n>>> （回车继续）\nLength = 30，可撤销步数 = 4\n\n>>> 场景 5：doc->undo()（Paste 把快照旧值写回，再次触发通知链）\n>>> （回车继续）\nundo 后 Length = 40，体积 = 8000，可重做步数 = 1\nRecompute......\n\t\t\t\t\t\t(25 %)\t\n\t\t\t\t\t\t(50 %)\t\n\t\t\t\t\t\t(75 %)\t\n\t\t\t\t\t\t(100 %)\t\n\t\t\t\t\t\t\t\t\nredo 后 Length = 30，Width = 15，体积 = 4500（期望 30*15*10 = 4500）\n\n============ 场景 6 | 持久化（FC02） ============\n断点：保存 Document.cpp:1763/984、PropertyStandard.cpp:1056、\n      PropertyTopoShape.cpp:704；打开 Document.cpp:1938、\n      PropertyStandard.cpp:1061、FeaturePartBox.cpp:228\n\n>>> 场景 6：saveAs —— FCStd 本质是个 zip（Document.xml + *.brp）\n>>> （回车继续）\n已保存到 debug-labs/FreeCADLabs_output.FCStd\n\n>>> 场景 6：关闭后重新打开（留意 isRestoring 分支拦住“假编辑”）\n>>> （回车继续）\nImporting project files......\n\t\t\t\t\t\t(20 %)\t\n\t\t\t\t\t\t(40 %)\t\n\t\t\t\t\t\t(60 %)\t\n\t\t\t\t\t\t(80 %)\t\n\t\t\t\t\t\t(100 %)\t\n\t\t\t\t\t\t\t\t\nPostprocessing......\n\t\t\t\t\t\t(100 %)\t\n\t\t\t\t\t\t\t\t\n读回 Length = 30，体积 = 4500\n\nFreeCADLabs 全部场景结束。   \n 本页对工程源码的说明以嵌入片段为准；对运行库内部的说明以固定版本源码和 3.12 接口文档为准。调用链图是删去无关分支后的解释，不是采样跟踪记录。教学原生片段未作为新增目标编译，代理特征练习供独立调试。 \n     进一步阅读  用它回答什么       解释器初始化配置   配置如何进入运行时，资源如何释放。     模块导入接口   导入、获取模块和重载的区别。     引用计数   引用责任、永久对象与析构行为。     异常接口   失败返回和异常状态怎样配合。     线程与解释器生命周期   线程状态、锁与结束顺序。     对应版本的运行库源码   把导入与初始化追到具体原生实现。     \n 重新回到最初的断点：模块导入让原生类型表发生变化，是因为导入器调用了原生初始化函数；脚本访问模型能改变原生属性，是因为包装把操作转给了活对象的属性接口。这是两条明确的调用与数据路径。 \n"}]</script><script>
+const data=JSON.parse(document.getElementById('source-data').textContent);
+const steps=JSON.parse(document.getElementById('step-data').textContent);
+const chapters=JSON.parse(document.getElementById('chapter-data').textContent);
+const $=id=>document.getElementById(id);
+let currentSource='',currentStep=0;
+// 源码窗口始终读取内嵌原文，不请求外部文件。
+function showSource(key){
+ const s=data[key]; if(!s)return;
+ currentSource=key; $('source-title').textContent=s.title;
+ $('source-path').textContent=s.path+' · 第 '+s.first+'—'+s.last+' 行';
+ const box=$('source-lines');box.replaceChildren();
+ s.text.split('\n').forEach((line,index)=>{
+  const row=document.createElement('div');row.className='source-line';
+  const n=document.createElement('span');n.className='line-number';n.textContent=s.first+index;
+  const c=document.createElement('span');c.className='line-code';c.textContent=line;
+  row.append(n,c);box.append(row);
+ });
+ $('copy-status').textContent='';$('source-dialog').showModal();box.scrollTop=0;
+}
+document.querySelectorAll('[data-source]').forEach(b=>b.addEventListener('click',()=>showSource(b.dataset.source)));
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.close).close()));
+$('copy-source').addEventListener('click',async()=>{
+ try{await navigator.clipboard.writeText(data[currentSource].text);$('copy-status').textContent='已复制源码';}
+ catch(e){$('copy-status').textContent='浏览器未开放剪贴板，请直接选中源码复制';}
+});
+$('chapter-jump').addEventListener('change',e=>{location.hash=e.target.value;});
+$('print').addEventListener('click',()=>window.print());
+// 搜索正文，结果按章节返回，正文始终保留便于连续阅读。
+function search(){
+ const q=$('search-input').value.trim().toLowerCase(),box=$('search-results');box.replaceChildren();
+ const found=chapters.filter(c=>!q||(c.title+' '+c.text).toLowerCase().includes(q));
+ $('search-count').textContent='找到 '+found.length+' 个章节';
+ found.forEach(c=>{
+  const b=document.createElement('button');b.className='search-result';
+  const title=document.createElement('b');title.textContent=c.title;const hint=document.createElement('small');
+  const at=q?c.text.toLowerCase().indexOf(q):-1;hint.textContent=at>=0?c.text.slice(Math.max(0,at-35),at+110):c.lead;
+  b.append(title,hint);b.addEventListener('click',()=>{$('search-dialog').close();location.hash=c.key;});box.append(b);
+ });
+}
+$('search-open').addEventListener('click',()=>{$('search-dialog').showModal();search();$('search-input').focus();});
+$('search-input').addEventListener('input',search);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('dialog[open]').forEach(d=>d.close());});
+window.addEventListener('scroll',()=>{const max=document.documentElement.scrollHeight-innerHeight;$('progress').style.width=(max?scrollY/max*100:0)+'%';},{passive:true});
+const observer=new IntersectionObserver(entries=>entries.forEach(e=>{if(e.isIntersecting)$('chapter-jump').value=e.target.id;}),{rootMargin:'-10% 0px -70% 0px'});
+document.querySelectorAll('.lesson').forEach(el=>observer.observe(el));
+</script><script>
+(() => {
+'use strict';
+const host=document.getElementById('mechanism-lab');
+const find=id=>host.querySelector('#'+id);
+const svgNS='http://www.w3.org/2000/svg';
+const node=(id,title,code,x,y,w,h,rows,life='alive',cube=false)=>({id,title,code,x,y,w,h:Math.max(h,125+(rows.length-1)*43),rows,life,cube});
+const event=(title,from,to,payload,why,source,focus,actions,stack,kind='call')=>({title,from,to,payload,why,source,focus,actions,stack,kind});
+const write=(id,key,value)=>['write',id,key,value];
+const life=(id,value)=>['life',id,value];
+const connect=(from,to,label)=>['connect',from,to,label];
+const scenes=[
+{
+id:'init',tab:'① 建立解释器',title:'解释器不是新开的窗口，而是一组在进程里建立的运行状态',
+question:'看清管理单例、解释器、首个线程和模块字典分别在什么时候出现。',
+initial:'主函数已进入。管理对象可以取得，但解释器核心尚未建立。',
+nodes:[
+node('app','主程序','Application::init',20,65,220,170,[['phase','执行阶段','准备初始化'],['manager','管理单例','尚未取得']]),
+node('runtime','解释器运行库','python312.dll',315,45,270,305,[['interp','解释器状态','尚未建立'],['thread','线程状态','尚未建立'],['gil','解释器锁','尚未建立'],['modules','模块容器','尚未建立']], 'pending'),
+node('builtin','内置模块入口表','名称 → 初始化函数',670,65,230,165,[['FreeCAD','FreeCAD','尚未登记'],['base','基础模块','尚未登记']]),
+node('saved','管理对象保存的状态','InterpreterSingleton',670,335,230,165,[['global','_global','空指针'],['ready','应用状态','尚未就绪']]),
+node('module','脚本可见的核心模块','FreeCAD 模块对象',20,335,235,165,[['exists','对象','尚未创建'],['types','脚本类型','尚未发布']], 'pending')],
+events:[
+event('登记内置模块入口','app','builtin','名称 → 初始化函数地址','登记的是导入入口，尚未执行入口，更没有创建长方体。','config','PyImport_AppendInittab',[write('builtin','FreeCAD','init_freecad_module'),write('builtin','base','已登记入口'),write('app','phase','配置初始化')],['LabsMain::main','Application::init','Application::initConfig']),
+event('取得管理单例','app','saved','Interpreter() → 管理对象','管理对象构造只准备自己的成员；它与真正的解释器状态是两个对象。','singleton','new InterpreterSingleton',[write('app','manager','已取得'),write('saved','global','nullptr')],['Application::initConfig','InterpreterSingleton::Instance']),
+event('把配置交给运行库','app','runtime','PyConfig：参数与初始化选项','进入 Py_InitializeFromConfig。随后展示它内部按源码归纳的关键建立阶段。','init','Py_InitializeFromConfig',[write('app','phase','初始化运行库'),life('runtime','alive')],['Application::initConfig','InterpreterSingleton::init','initInterpreter','Py_InitializeFromConfig']),
+event('创建解释器与首个线程','runtime','runtime','解释器状态 I · 线程状态 T','运行库在当前进程中建立解释器状态、线程状态和锁；没有另开脚本进程。',null,'',[write('runtime','interp','I：已建立'),write('runtime','thread','T：关联 I'),write('runtime','gil','当前线程持有')],['Py_InitializeFromConfig','pyinit_core','pycore_create_interpreter'],'write'),
+event('准备模块容器与导入系统','runtime','runtime','模块字典 · 内置对象 · 导入机制','这些运行时对象让后续模块导入和代码执行成为可能。此处合并展示多个内部步骤。',null,'',[write('runtime','modules','sys / builtins / __main__')],['Py_InitializeFromConfig','核心与主环境初始化'],'write'),
+event('保存线程状态，释放锁','runtime','saved','T → _global','保存的是线程状态指针，不是全局变量字典。后续进入脚本接口时需按约定重新持锁。','init','PyEval_SaveThread',[write('saved','global','T：线程状态指针'),write('runtime','gil','已释放')],['InterpreterSingleton::init','PyEval_SaveThread'],'return'),
+event('按登记的入口创建核心模块','builtin','module','调用 init_freecad_module','应用创建阶段取得锁，导入核心模块；初始化函数创建真正的模块对象。','setupapp','PyImport_ImportModule',[life('module','alive'),write('module','exists','模块对象已创建'),write('runtime','gil','作用域持锁')],['Application::initApplication','Application 构造','setupPythonTypes','init_freecad_module']),
+event('发布能力并运行启动脚本','module','app','脚本类型 · 搜索路径 · 启动环境','应用初始化完成后，才进入场景零。初始化中已执行脚本；原生实验没有打开交互控制台。','appscript','ProduceScript',[write('module','types','已发布包装类型'),write('saved','ready','场景零可以开始'),write('app','phase','进入场景零'),write('runtime','gil','后续按作用域取得')],['Application::initApplication','InterpreterSingleton::runString'],'return')]
+},
+{
+id:'import',tab:'② 导入与登记',title:'一个字符串怎样走到原生类型表，再变成真实的长方体',
+question:'重点看绿色表项在哪个原生函数中插入，工厂又在何时才被调用。',
+initial:'解释器已经建立；Part 扩展可以已映射进进程，但长方体还没有登记。',
+nodes:[
+node('request','原生创建请求','createInstanceByName',20,35,220,160,[['name','类型名','Part::Box'],['result','返回指针','尚未返回']]),
+node('python','解释器导入系统','PyImport_ImportModule',330,35,250,165,[['mod','模块名','待接收'],['cache','模块缓存','尚无 Part']]),
+node('extension','零件扩展库','Part.pyd',670,35,230,165,[['entry','入口','PyInit_Part'],['phase','执行状态','尚未调用入口']]),
+node('registry','原生类型表','Base::Type',270,300,330,205,[['name','typemap','尚无 Part::Box'],['parent','父类型','等待登记'],['factory','instMethod','尚无工厂地址']]),
+node('object','原生长方体','Part::Box · B',670,300,230,220,[['exists','生命周期','尚未构造']], 'pending',true)],
+events:[
+event('从类型名拆出模块名','request','python','Part::Box → Part','允许加载时先进入导入逻辑；不是先查类型、缺失时才调用导入。','type','getModuleName',[write('python','mod','Part')],['scene0_typeSystem','Type::createInstanceByName','Type::importModule']),
+event('持锁进入标准导入','python','python','PyImport_ImportModule("Part")','模块缓存没有该项，继续查找扩展。兼容初始化调用不会新建第二个解释器。','pp','PyImport_ImportModule',[write('python','cache','开始查找扩展')],['Type::importModule','InterpreterSingleton::loadModule','PP_Load_Module','PyImport_ImportModule']),
+event('找到库并解析导出符号','python','extension','GetProcAddress → PyInit_Part','系统装载库与解释器调用入口不同；本实验即使已经映射库，也仍需执行模块入口。',null,'',[write('extension','phase','已取得入口地址')],['扩展加载器','原生动态模块加载','查找导出函数']),
+event('运行原生初始化函数','extension','extension','PyInit_Part()','入口先导入材质依赖，再构造模块及类型。下面聚焦原生长方体登记。','part','Part::initModule',[write('extension','phase','正在初始化')],['扩展加载器','PyInit_Part'],'call'),
+event('把创建函数地址送往类型系统','extension','registry','Part::Box · &Part::Box::create','先登记父类型，再进入 Box::init。此时传递的是工厂地址，还没有创建本次长方体。','partreg','Part::Box',[write('registry','parent','Part::Primitive 已登记')],['PyInit_Part','Part::Box::init','BaseClass::initSubclass']),
+event('直接插入原生类型记录','registry','registry','"Part::Box" → k → 工厂 F','原生函数直接写 typemap 和 typedata。这就是导入使原生数据发生变化的确切动作。','type','typedata.emplace_back',[write('registry','name','"Part::Box" → k'),write('registry','factory','F = &Part::Box::create')],['Part::Box::init','BaseClass::initSubclass','Type::createType'],'write'),
+event('返回模块对象','extension','python','PyObject* M → 模块缓存','导入成功后，模块缓存持有 M。工具释放本次取得的新引用，向上返回借用指针。','pp','Py_XDECREF(module)',[write('python','cache','sys.modules["Part"] → M'),write('extension','phase','初始化完成')],['PyInit_Part 返回','PyImport_ImportModule 返回','PP_Load_Module'],'return'),
+event('记录加载完成，再查询原生表','python','registry','fromName("Part::Box") → k','工程记录已加载模块，随后按类型名查询自己的原生表；没有把模块对象转换为长方体。','type','fromName(typeName)',[write('request','result','类型已查到，准备调用工厂')],['Type::importModule 返回','Type::createInstanceByName','Type::fromName'],'return'),
+event('调用工厂，构造实例','registry','object','F() → new Part::Box()','直到调用保存的工厂地址，才构造长方体 B，并初始化尺寸等属性。','typemacro','return new',[life('object','alive'),write('object','exists','B：已构造'),['cube','object',10,1000],write('request','result','B：原生对象指针')],['Type::createInstanceByName','Type::createInstance','Part::Box::create','Part::Box::Box']),
+event('场景零删除临时实例','object','request','delete B · 登记保留','场景零只用临时实例触发登记，随即删除；模块缓存与原生类型记录仍供后续场景使用。','main','scene0_typeSystem',[life('object','dead'),write('object','exists','临时实例已删除'),write('request','result','场景零结束')],['scene0_typeSystem'],'drop')]
+},
+{
+id:'wrapper',tab:'③ 包装与引用',title:'两种对象、两个地址，用一条明确的原生指针连起来',
+question:'脚本变量、原生缓存和文档各自持有什么？重复查询会不会再造长方体？',
+initial:'原生长方体已由文档创建。为突出首次包装，示意从尚未请求脚本包装的位置开始。',
+nodes:[
+node('script','脚本变量','box',20,65,225,170,[['value','指向','尚未赋值'],['again','再次查询','尚未执行']]),
+node('wrapper','脚本包装对象','PrimitivePy · W',345,65,245,235,[['exists','包装','尚未创建'],['pointer','原生指针','尚未设置'],['holders','持有者','尚无']], 'pending'),
+node('model','原生业务对象','Part::Box · B',675,65,225,265,[['cache','PythonObject','尚无包装'],['identity','原生类型','Part::Box']], 'alive',true),
+node('doc','文档','Document',675,365,225,145,[['owns','对象管理','持有模型 B']]),
+node('identity','两种类型的关系','包装类型 ≠ 业务类型',20,365,570,165,[['native','原生身份','Part::Box'],['python','脚本身份','等待包装建立']])],
+events:[
+event('原生对象请求自己的脚本包装','model','wrapper','虚函数 getPyObject()','长方体继承原始体的实现，本次走 Primitive::getPyObject，而非假设存在专属 BoxPy。','wrapper','Primitive::getPyObject',[write('wrapper','exists','准备首次创建')],['DocumentPy::addObject','Part::Primitive::getPyObject']),
+event('构造包装并保存原生指针','model','wrapper','new PrimitivePy(this)','W 是脚本对象；B 是模型对象。包装把 this 保存为原生指针，没有复制整个长方体。','wrapper','new PrimitivePy',[life('wrapper','alive'),write('wrapper','exists','W：已创建'),write('wrapper','pointer','_pcTwinPointer → B'),connect('wrapper','model','原生指针'),write('identity','python','PrimitivePy')],['Primitive::getPyObject','PrimitivePy 构造'],'write'),
+event('原生对象缓存包装引用','wrapper','model','PythonObject → W','原生对象缓存同一个包装对象，供下一次查询复用。缓存是一份脚本强引用。','wrapper','PythonObject =',[write('model','cache','强引用 → W'),write('wrapper','holders','原生缓存'),connect('model','wrapper','缓存强引用')],['Primitive::getPyObject'],'ref'),
+event('把一份新引用交给脚本','wrapper','script','Py::new_reference_to → W','返回新引用指的是新的持有责任；这里并没有创建另一个包装对象。','wrapper','new_reference_to',[write('script','value','强引用 → W'),write('wrapper','holders','缓存 + 脚本变量'),connect('script','wrapper','脚本强引用')],['Primitive::getPyObject 返回','DocumentPy::addObject 返回'],'return'),
+event('再次查询同一对象','script','model','doc.getObject("Box")','文档找到的是同一个活模型 B，然后请求它的脚本包装。','wrapper','if (PythonObject.is',[write('script','again','查到同一个模型 B')],['DocumentPy 查询对象','Primitive::getPyObject']),
+event('复用同一个包装身份','model','script','缓存 W → 新引用','缓存已经存在，所以不再执行 new PrimitivePy。两次查询可以得到同一包装身份。','wrapper','new_reference_to',[write('script','again','结果仍是 W'),write('identity','python','PrimitivePy · 同一 W')],['Primitive::getPyObject 返回'],'return')]
+},
+{
+id:'property',tab:'④ 属性赋值',title:'让“2 cm”变成 20 毫米，再看哪份数据会跟着改变',
+question:'输入值怎样经过转换写进模型？为什么之前读出的量值不会自动更新？',
+initial:'长方体尺寸均为 10 毫米。先把长度设为 2 厘米，再读取量值，最后改成 30 毫米。',
+nodes:[
+node('input','脚本输入','box.Length = ...',20,35,225,165,[['value','当前输入','"2 cm"'],['type','脚本类型','字符串']]),
+node('binding','属性包装入口','PropertyContainerPy',340,35,240,180,[['property','找到属性','等待查找'],['route','调用','等待分派']]),
+node('quantity','单位与范围转换','PropertyQuantityConstraint',670,35,230,180,[['value','原生量值','待转换'],['unit','单位检查','待检查']]),
+node('copy','独立的读取结果','q = box.Length',20,320,225,180,[['value','q.Value','尚未读取'],['relation','与模型关系','尚未产生']], 'pending'),
+node('property','模型中的真实尺寸','PropertyFloat',340,320,240,180,[['value','_dValue','10 mm'],['notice','属性通知','等待修改']]),
+node('geometry','长方体几何','Part::Box',670,285,230,230,[['volume','体积','1000 mm³']], 'alive',true)],
+events:[
+event('脚本值进入属性槽','input','binding','PyObject*：字符串 "2 cm"','包装接到的仍是脚本字符串对象，不是原生浮点数。','setattro','_setattr(attr, value)',[write('binding','property','Length 属性'),write('binding','route','转给具体属性')],['脚本属性赋值','PyObjectBase::__setattro','PropertyContainerPy::setCustomAttributes']),
+event('转换单位并检查范围','binding','quantity','"2 cm" → 20 mm','具体长度属性把字符串解析为原生量值，检查约束及单位后交给原生写入。','constraint','createQuantityFromPy',[write('quantity','value','20.0 mm'),write('quantity','unit','长度单位匹配')],['PropertyContainerPy::setCustomAttributes','PropertyQuantityConstraint::setPyObject','createQuantityFromPy'],'write'),
+event('先发出修改前通知','quantity','property','aboutToSetValue()','当前值仍为 10。修改前事件让文档等持有者处理变化前的业务。','float','aboutToSetValue',[write('property','notice','修改前通知已发出')],['PropertyQuantityConstraint::setPyObject','PropertyFloat::setValue','aboutToSetValue']),
+event('把新值写入原生字段','quantity','property','_dValue = 20.0','这才是模型尺寸实际改变的那一刻。数据到达后，绿色字段才更新。','float','_dValue =',[write('property','value','20 mm'),write('property','notice','随后发出修改后通知')],['PropertyFloat::setValue'],'write'),
+event('特征响应通知，更新几何','property','geometry','尺寸 20 × 10 × 10','本例普通尺寸变化可触发长方体对象级自算。完整文档调度仍是另一层职责。','box','BRepPrimAPI_MakeBox',[write('geometry','volume','2000 mm³'),['cube','geometry',20,2000],write('property','notice','修改后通知已发出')],['属性修改后通知','Box::onChanged','Box::execute'],'write'),
+event('读取长度，构造独立量值','property','copy','q = 新量值(20 mm)','长度读取构造独立量值对象；它不是 _dValue 的别名或活引用。','quantity','new Quantity',[life('copy','alive'),write('copy','value','20 mm'),write('copy','relation','独立值对象')],['脚本属性读取','PropertyQuantity::getPyObject'],'return'),
+event('再次赋值：这次输入 30','input','quantity','数字 30 → 30 mm','同样经过属性入口与转换，下面合并展示本轮相同的前后通知。','quantity','PyLong_Check',[write('input','value','30'),write('input','type','整数'),write('quantity','value','30.0 mm')],['脚本属性赋值','属性转换'],'call'),
+event('模型改变，旧量值保持原值','quantity','property','_dValue = 30.0','只有模型字段写成 30。左侧 q 仍是 20，因为它拥有独立的值。','float','_dValue =',[write('property','value','30 mm'),write('property','notice','本轮前后通知完成')],['PropertyFloat::setValue'],'write'),
+event('几何随模型更新','property','geometry','尺寸 30 × 10 × 10','现在几何体积是 3000；旧量值仍为 20。两条数据的归属在画面上保持分离。','box','BRepPrimAPI_MakeBox',[write('geometry','volume','3000 mm³'),['cube','geometry',30,3000]],['Box::onChanged','Box::execute'],'write')]
+},
+{
+id:'lifetime',tab:'⑤ 关闭与失效',title:'文档已经关闭，为什么脚本变量还在，却不能再访问模型',
+question:'观察模型销毁、原生指针断开和引用失效错误，区分两套生命周期。',
+initial:'脚本变量持有包装 W；W 指向文档管理的模型 B。关闭文档不会自动删除脚本变量。',
+nodes:[
+node('script','脚本变量','box → W',20,45,225,175,[['ref','脚本引用','仍持有 W'],['access','访问结果','可以读 Length']]),
+node('wrapper','脚本包装 W','PrimitivePy',340,45,240,210,[['valid','包装状态','有效'],['pointer','原生指针','→ B'],['cache','模型缓存引用','存在']]),
+node('model','原生模型 B','Part::Box',670,45,230,220,[['life','生命周期','活对象']], 'alive',true),
+node('doc','文档','closeDocument',20,330,225,165,[['life','文档状态','打开'],['owns','模型集合','持有 B']]),
+node('error','解释器异常状态','当前线程',365,350,535,145,[['type','异常类型','尚无'],['reason','原因','尚无']], 'pending')],
+links:[['script','wrapper','脚本强引用'],['wrapper','model','原生指针'],['doc','model','管理模型']],
+events:[
+event('关闭文档，销毁原生模型','doc','model','原生生命周期结束','文档释放模型。脚本仍引用包装，并不保证文档里的原生对象继续存在。','invalidate','DocumentObject::~',[write('doc','life','正在关闭'),write('doc','owns','释放 B'),write('model','life','正在析构')],['Application::closeDocument','DocumentObject::~DocumentObject'],'drop'),
+event('析构主动使包装失效','model','wrapper','setInvalid()','原生析构通知包装：模型不再可用。不是等下一次读取时比较数据来猜。','invalidate','setInvalid',[write('wrapper','valid','无效'),life('wrapper','invalid')],['DocumentObject::~DocumentObject','PyObjectBase::setInvalid'],'drop'),
+event('清空原生指针','wrapper','model','_pcTwinPointer = nullptr','从包装到原生模型的连线断开。包装对象仍在，但已经不能解引用到 B。','invalidptr','_pcTwinPointer =',[write('wrapper','pointer','nullptr'),['disconnect','wrapper','model'],life('model','dead'),write('model','life','已销毁')],['PyObjectBase::setInvalid'],'drop'),
+event('释放缓存引用，保留脚本引用','model','wrapper','缓存释放 · 变量仍持有 W','模型缓存释放自己持有的包装引用；脚本变量自己的引用仍使包装存在。这里只表达持有关系，不显示虚构计数。','invalidate','PythonObject',[write('wrapper','cache','随模型结束释放'),write('doc','life','已关闭'),['disconnect','doc','model'] ],['原生对象析构结束'],'ref'),
+event('脚本再次请求属性','script','wrapper','box.Length','属性入口先检查包装有效性，不会去读已经删除的原生对象。','getattro','isValid',[write('script','access','等待有效性检查')],['脚本属性读取','PyObjectBase::__getattro']),
+event('返回引用失效异常','wrapper','error','ReferenceError','无效包装留下明确异常，旧脚本变量没有被清除，但已不再代表一个可访问的模型。','getattro','PyErr_Format',[life('error','alive'),write('error','type','ReferenceError'),write('error','reason','原生模型已删除'),write('script','access','读取失败：引用已失效')],['PyObjectBase::__getattro','返回空并保留异常'],'drop')]
+},
+{
+id:'callback',tab:'⑥ 重算回调',title:'一次重算穿过两种语言，最后把形状交回原生模型',
+question:'跟随闭合的数据路线：原生调度 → 脚本代理 → 原生几何 → 属性写回。',
+initial:'临时文档中已有脚本特征，Length = 12 mm，代理负责生成立方体。',
+nodes:[
+node('doc','原生文档调度','Document::recompute',20,45,235,170,[['phase','重算阶段','等待执行'],['result','结果','尚无']]),
+node('bridge','原生执行桥','FeaturePythonImp',345,45,240,180,[['lock','解释器锁','待取得'],['arg','参数','活模型的包装']]),
+node('proxy','脚本代理','CubeLogic.execute(obj)',670,45,230,180,[['size','读取尺寸','等待调用'],['action','算法调用','等待生成']]),
+node('shape','原生形状属性','obj.Shape',345,330,240,180,[['value','属性值','待写入'],['owner','持有者','文档模型']]),
+node('kernel','原生几何算法','Part.makeBox',670,295,230,225,[['result','几何结果','尚未生成']], 'pending',true)],
+events:[
+event('文档调度脚本特征','doc','bridge','调用原生 execute()','模型身份和调度仍在原生层；特征通过执行桥调用代理实现。','proxy','FeaturePythonImp::execute',[write('doc','phase','执行脚本特征'),write('bridge','lock','已取得')],['Document::recompute','FeaturePythonT::execute','FeaturePythonImp::execute']),
+event('传入活模型的包装','bridge','proxy','execute(obj)：包装指针','常用分支把模型的脚本包装作为参数传入；脚本没有收到模型数据的完整副本。','proxy','object->getPyObject',[write('proxy','size','Length.Value = 12'),write('bridge','arg','同一个模型的包装')],['FeaturePythonImp::execute','Base::pyCall','CubeLogic.execute']),
+event('代理调用原生几何算法','proxy','kernel','makeBox(12, 12, 12)','脚本方法可以再次调用原生扩展，进入几何算法。',null,'',[life('kernel','alive'),write('proxy','action','生成 12 × 12 × 12')],['CubeLogic.execute','Part.makeBox','原生几何算法']),
+event('生成形状并返回包装','kernel','proxy','形状结果 → 脚本可用对象','几何算法产生形状，通过绑定返回脚本可用的对象。',null,'', [write('kernel','result','体积 1728 mm³'),['cube','kernel',12,1728]],['原生几何算法返回','CubeLogic.execute'],'return'),
+event('经属性接口写回模型','proxy','shape','obj.Shape = 形状对象','赋值回到属性包装，再由具体形状属性处理原生数据与通知；并非解释器自动同步全部字段。','props','prop->setPyObject',[write('shape','value','新立方体形状'),write('proxy','action','结果已写回')],['CubeLogic.execute','PropertyContainerPy::setCustomAttributes','具体形状属性写入'],'write'),
+event('脚本方法返回执行桥','proxy','bridge','正常返回 None','普通无返回值的代理方法按已处理计算。显式返回假是另一条明确业务分支。','proxy','res.isBoolean',[write('bridge','arg','执行已处理')],['CubeLogic.execute 返回','FeaturePythonImp::execute'],'return'),
+event('回到原生文档调度','bridge','doc','执行完成 → 继续文档重算','一条同步调用链多次跨越边界，最终回到原生调度；模型归属始终没有转给脚本。','proxy','return true',[write('doc','phase','当前特征执行完成'),write('doc','result','形状已写回，继续调度'),write('bridge','lock','作用域结束释放')],['FeaturePythonT::execute 返回','Document::recompute'],'return')]
+}
+];
+
+
+// 演示状态由事件动作维护；回退按顺序重放事件，不比较前后状态猜变化。
+const player={scene:null,model:null,mode:'ready',position:-1,active:null,speed:1,frame:0,lastTime:0};
+const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const svgEl=(name,attrs={},text)=>{
+ const el=document.createElementNS(svgNS,name);
+ Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,String(v)));
+ if(text!==undefined)el.textContent=text;return el;
+};
+function resetModel(){
+ const m={nodes:{},links:[],journal:[]};
+ for(const n of player.scene.nodes)m.nodes[n.id]={life:n.life,fields:Object.fromEntries(n.rows.map(r=>[r[0],r[2]])),cube:n.cube?{size:10,volume:1000}:null};
+ m.links=(player.scene.links||[]).map(link=>({from:link[0],to:link[1],label:link[2]}));
+ player.model=m;
+}
+function applyEvent(e,record=true){
+ const m=player.model;
+ for(const a of e.actions){
+  const n=m.nodes[a[1]];
+  switch(a[0]){
+   case 'write':n.fields[a[2]]=a[3];break;
+   case 'life':n.life=a[2];break;
+   case 'connect':m.links.push({from:a[1],to:a[2],label:a[3]});break;
+   case 'disconnect':m.links=m.links.filter(l=>!(l.from===a[1]&&l.to===a[2]));break;
+   case 'cube':n.cube={size:a[2],volume:a[3]};break;
+  }
+ }
+ if(record)m.journal.push(e.title);
+}
+function route(from,to,lane=0){
+ const a=player.scene.nodes.find(n=>n.id===from),b=player.scene.nodes.find(n=>n.id===to);
+ if(a===b){const side=Math.min(916,a.x+a.w+32);return 'M '+(a.x+a.w-20)+' '+(a.y+48)+' C '+side+' '+(a.y+20)+', '+side+' '+(a.y+a.h-18)+', '+(a.x+a.w-20)+' '+(a.y+a.h-40);}
+ const ax=a.x+a.w/2,ay=a.y+a.h/2+lane,bx=b.x+b.w/2,by=b.y+b.h/2+lane;
+ if(Math.abs(a.y-b.y)>100&&Math.abs(ax-bx)>100){
+  const y1=by>ay?a.y+a.h:a.y,y2=by>ay?b.y:b.y+b.h,mid=(y1+y2)/2;
+  return 'M '+ax+' '+y1+' V '+mid+' H '+bx+' V '+y2;
+ }
+ const obstruction=player.scene.nodes.some(n=>n!==a&&n!==b&&n.x>Math.min(a.x,b.x)&&n.x+n.w<Math.max(a.x+a.w,b.x+b.w)&&ay>=n.y&&ay<=n.y+n.h);
+ if(obstruction){
+  const upper=ay<280,y1=upper?a.y+a.h:a.y,y2=upper?b.y+b.h:b.y,mid=upper?Math.max(y1,y2)+27:Math.min(y1,y2)-27;
+  return 'M '+ax+' '+y1+' V '+mid+' H '+bx+' V '+y2;
+ }
+ if(Math.abs(bx-ax)>Math.abs(by-ay)){
+  const x1=bx>ax?a.x+a.w:a.x,x2=bx>ax?b.x:b.x+b.w,mid=(x1+x2)/2;
+  return 'M '+x1+' '+ay+' C '+mid+' '+ay+', '+mid+' '+by+', '+x2+' '+by;
+ }
+ const y1=by>ay?a.y+a.h:a.y,y2=by>ay?b.y:b.y+b.h,mid=(y1+y2)/2;
+ return 'M '+ax+' '+y1+' C '+ax+' '+mid+', '+bx+' '+mid+', '+bx+' '+y2;
+}
+function drawCube(g,n,c){
+ const width=45+Math.min(c.size,30)*2.2,height=42,depth=21;
+ const x=n.w/2-width/2-8,y=n.h-77;
+ const shape=svgEl('g',{'class':'lab-cube','transform':'translate('+x+' '+y+')'});
+ shape.append(svgEl('path',{d:'M 0 0 L '+depth+' -18 L '+(width+depth)+' -18 L '+width+' 0 Z',fill:'#9bcfb5'}));
+ shape.append(svgEl('path',{d:'M '+width+' 0 L '+(width+depth)+' -18 L '+(width+depth)+' '+(height-18)+' L '+width+' '+height+' Z',fill:'#367f65'}));
+ shape.append(svgEl('path',{d:'M 0 0 H '+width+' V '+height+' H 0 Z',fill:'#69b08e'}));
+ shape.append(svgEl('path',{d:'M 0 '+(height+8)+' H '+width,stroke:'#285746','stroke-width':1}));
+ shape.append(svgEl('text',{x:width/2,y:height+27,'text-anchor':'middle','class':'lab-dimension'},c.size+' mm'));
+ g.append(shape);
+ const transition=player.active&&player.active.phase==='settle'&&player.active.cubeFrom;
+ if(!reduced&&transition&&transition.id===n.id){
+  const ratio=(45+Math.min(transition.size,30)*2.2)/width;
+  shape.style.transformBox='fill-box';shape.style.transformOrigin='left center';
+  shape.animate([{scale:ratio+' 1'},{scale:'1 1'}],{duration:850/player.speed,easing:'ease-in-out'});
+ }
+}
+function drawBoard(highlight=null){
+ const map=find('lab-map');map.replaceChildren();
+ const defs=svgEl('defs');
+ const pattern=svgEl('pattern',{id:'lab-dots',width:20,height:20,patternUnits:'userSpaceOnUse'});
+ pattern.append(svgEl('circle',{cx:1,cy:1,r:1,fill:'#dce5da'}));defs.append(pattern);
+ ['blue','green','red'].forEach((c,i)=>{const marker=svgEl('marker',{id:'lab-arrow-'+c,viewBox:'0 0 10 10',refX:9,refY:5,markerWidth:7,markerHeight:7,orient:'auto-start-reverse'});marker.append(svgEl('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:['#3e7da2','#408669','#b45c4c'][i]}));defs.append(marker);});
+ map.append(defs,svgEl('rect',{width:920,height:540,fill:'url(#lab-dots)'}));
+ const links=svgEl('g',{'class':'lab-links'});
+ player.model.links.forEach(l=>{
+  const opposite=player.model.links.some(other=>other.from===l.to&&other.to===l.from);
+  const lane=opposite?(player.scene.nodes.find(n=>n.id===l.from).x<player.scene.nodes.find(n=>n.id===l.to).x?-22:22):0;
+  const p=svgEl('path',{d:route(l.from,l.to,lane),'class':'lab-link','marker-end':'url(#lab-arrow-green)'});
+  links.append(p);
+ });
+ map.append(links);
+ const nodes=svgEl('g');
+ for(const n of player.scene.nodes){
+  const state=player.model.nodes[n.id],g=svgEl('g',{'transform':'translate('+n.x+' '+n.y+')','data-node':n.id,'class':'lab-node '+state.life+(highlight===n.id?' lab-hit':'')});
+  g.append(svgEl('rect',{x:0,y:0,width:n.w,height:n.h,rx:12,'class':'lab-node-bg'}));
+  g.append(svgEl('rect',{x:0,y:0,width:n.w,height:6,rx:3,'class':'lab-node-stripe'}));
+  g.append(svgEl('text',{x:17,y:31,'class':'lab-node-title'},n.title));
+  g.append(svgEl('text',{x:17,y:53,'class':'lab-node-code'},n.code));
+  g.append(svgEl('line',{x1:16,y1:66,x2:n.w-16,y2:66,'class':'lab-divider'}));
+  n.rows.forEach((r,index)=>{
+   const y=88+index*43;
+   g.append(svgEl('text',{x:17,y:y,'class':'lab-field-label'},r[1]));
+   const changed=player.active&&player.active.phase==='settle'&&player.active.event.actions.some(a=>a[0]==='write'&&a[1]===n.id&&a[2]===r[0]);
+   if(changed)g.append(svgEl('rect',{x:10,y:y+6,width:n.w-20,height:24,rx:4,'class':'lab-field-flash'}));
+   const value=svgEl('text',{x:17,y:y+23,'class':'lab-field-value','data-field':n.id+'.'+r[0]},state.fields[r[0]]);
+   if(String(state.fields[r[0]]).length>26){value.setAttribute('textLength',n.w-32);value.setAttribute('lengthAdjust','spacingAndGlyphs');}
+   g.append(value);
+  });
+  if(n.cube&&state.life!=='pending'&&state.life!=='dead')drawCube(g,n,state.cube);
+  if(state.life==='pending'||state.life==='dead'){
+   g.append(svgEl('rect',{x:n.w-108,y:-23,width:100,height:19,rx:9,'class':'lab-life-tag'}));
+   g.append(svgEl('text',{x:n.w-58,y:-9,'text-anchor':'middle','class':'lab-life-text'},state.life==='pending'?'等待创建':'已销毁'));
+  }
+  nodes.append(g);
+ }
+ map.append(nodes);
+ const overlay=svgEl('g',{id:'lab-transfer-layer'});map.append(overlay);
+ // 所有权连线采用固定标签，保证双向指针不会被误读成同一种关系。
+ player.model.links.forEach((l,index)=>{
+  const p=links.children[index],point=p.getPointAtLength(p.getTotalLength()*.5);
+  const text=svgEl('text',{x:point.x,y:point.y-8-(index%2)*4,'text-anchor':'middle','class':'lab-link-label'},l.label);overlay.append(text);
+ });
+ if(player.active)drawFlight(player.active.phase==='transport'?player.active.elapsed/transportDuration():1);
+}
+function drawFlight(fraction){
+ const active=player.active;if(!active)return;
+ const layer=find('lab-transfer-layer');layer.querySelectorAll('.lab-travel').forEach(n=>n.remove());
+ const e=active.event,color=e.kind==='drop'?'red':e.kind==='return'||e.kind==='ref'?'green':'blue';
+ const group=svgEl('g',{'class':'lab-travel'});
+ const path=svgEl('path',{d:route(e.from,e.to),'class':'lab-route '+color,'marker-end':'url(#lab-arrow-'+color+')'});
+ group.append(path);layer.append(group);
+ const t=Math.max(0,Math.min(1,fraction)),ease=t*t*(3-2*t),len=path.getTotalLength(),pt=path.getPointAtLength(ease*len);
+ if(active.phase==='transport'){
+  group.append(svgEl('circle',{cx:pt.x,cy:pt.y,r:14,'class':'lab-packet-halo '+color}));
+  group.append(svgEl('circle',{cx:pt.x,cy:pt.y,r:6,'class':'lab-packet '+color}));
+  const label=e.payload.length>33?e.payload.slice(0,31)+'…':e.payload;
+  const width=Math.min(310,label.length*8+28),x=Math.max(8,Math.min(912-width,pt.x-width/2)),y=Math.max(20,pt.y-45);
+  group.append(svgEl('rect',{x,y,width,height:29,rx:6,'class':'lab-packet-label-bg'}));
+  group.append(svgEl('text',{x:x+width/2,y:y+20,'text-anchor':'middle','class':'lab-packet-label'},label));
+ }
+}
+function renderStack(e){
+ const list=find('lab-stack-list');list.replaceChildren();
+ const frames=e?e.stack:['实验准备'];
+ frames.forEach((frame,i)=>{const li=document.createElement('li');li.textContent=frame;li.className=i===frames.length-1?'current':'';list.append(li);});
+}
+function renderSource(e){
+ const button=find('lab-source'),box=find('lab-code-lines');box.replaceChildren();
+ if(!e||!e.source){
+  button.disabled=true;find('lab-code-path').textContent=e?'机制示意 · 非逐帧实测':'播放后，显示对应的源码位置';
+  const lines=!e?['选择一个场景，点击「播放过程」。','也可以用「下一步」观察一次完整的数据传递。']:e.title.includes('异常')?['访问旧包装','  → 有效性检查失败','  → 设置 ReferenceError，返回空']:e.stack.concat(['传递：'+e.payload]);
+  box.textContent=lines.join('\n');return;
+ }
+ button.disabled=false;const s=data[e.source];find('lab-code-path').textContent=s.path;
+ const lines=s.text.split('\n');let at=lines.findIndex(line=>line.includes(e.focus));if(at<0)at=0;
+ const start=Math.max(0,at-2),end=Math.min(lines.length,start+7);
+ for(let i=start;i<end;i++){
+  const row=document.createElement('span');row.className='lab-code-line'+(i===at?' active':'');
+  const no=document.createElement('i');no.textContent=s.first+i;
+  const text=document.createElement('span');text.textContent=lines[i]||' ';row.append(no,text);box.append(row);
+ }
+}
+function renderTimeline(){
+ const timeline=host.querySelector('.lab-timeline');timeline.replaceChildren();
+ player.scene.events.forEach((e,i)=>{
+  const b=document.createElement('button');b.type='button';b.textContent=String(i+1).padStart(2,'0');b.title=e.title;b.setAttribute('aria-label','跳到第 '+(i+1)+' 步：'+e.title);
+  b.className=i<=player.position?'done':'';
+  if(player.active&&player.active.index===i||!player.active&&player.position===i){b.classList.add('selected');b.setAttribute('aria-current','step');}
+  b.addEventListener('click',()=>seek(i));timeline.append(b);
+ });
+}
+function updateUI(){
+ const index=player.active?player.active.index:player.position,e=index>=0?player.scene.events[index]:null;
+ find('lab-counter').textContent=(index+1)+' / '+player.scene.events.length;
+ find('lab-play').textContent=player.mode==='playing'||player.mode==='stepping'?'Ⅱ 暂停':player.mode==='complete'?'↻ 再播放一次':player.mode==='paused'?'▶ 继续播放':'▶ 播放过程';
+ find('lab-status').textContent=player.mode==='playing'||player.mode==='stepping'?'正在演示':player.mode==='paused'?'已暂停':player.mode==='complete'?'本场景演示完成':'等待播放';
+ find('lab-prev').disabled=player.position<0&&!player.active;
+ find('lab-next').disabled=player.mode==='complete';
+ find('lab-event-no').textContent=e?'第 '+(index+1)+' 步':'起点';
+ find('lab-event-title').textContent=e?e.title:'先看清这些数据属于谁';
+ find('lab-event-explain').textContent=e?e.why:player.scene.initial;
+ find('lab-flight-kind').textContent=e?({call:'调用 / 传参',write:'原生写入',return:'返回',drop:'生命周期结束',ref:'引用责任'}[e.kind]):'起点';
+ find('lab-flight-value').textContent=e?e.payload:'点击播放，让数据沿箭头移动';
+ renderStack(e);renderSource(e);renderTimeline();
+ const journal=find('lab-journal-list');journal.replaceChildren();
+ if(!player.model.journal.length){const li=document.createElement('li');li.textContent='尚未发生本场景的操作';journal.append(li);}
+ player.model.journal.slice(-4).forEach((item,i)=>{const li=document.createElement('li');li.textContent=item;const num=player.model.journal.length-Math.min(4,player.model.journal.length)+i+1;li.value=num;journal.append(li);});
+}
+function transportDuration(){return reduced?180:1750;}
+function cancelFrame(){cancelAnimationFrame(player.frame);player.frame=0;player.lastTime=0;}
+function beginEvent(index){
+ player.active={index,event:player.scene.events[index],phase:'transport',elapsed:0};
+ drawBoard();updateUI();
+}
+function frame(now){
+ if(player.mode!=='playing'&&player.mode!=='stepping')return;
+ const dt=player.lastTime?Math.min(70,now-player.lastTime)*player.speed:0;player.lastTime=now;
+ const active=player.active;active.elapsed+=dt;
+ if(active.phase==='transport'){
+  drawFlight(active.elapsed/transportDuration());
+  if(active.elapsed>=transportDuration()){
+   const cubeAction=active.event.actions.find(a=>a[0]==='cube');
+   if(cubeAction)active.cubeFrom={id:cubeAction[1],size:player.model.nodes[cubeAction[1]].cube.size};
+   applyEvent(active.event);active.phase='settle';active.elapsed=0;player.position=active.index;
+   drawBoard(active.event.to);updateUI();
+  }
+ }else if(active.elapsed>=1100){
+  const next=active.index+1;player.active=null;
+  if(next>=player.scene.events.length){player.mode='complete';cancelFrame();updateUI();return;}
+  if(player.mode==='stepping'){player.mode='paused';cancelFrame();updateUI();return;}
+  beginEvent(next);
+ }
+ player.frame=requestAnimationFrame(frame);
+}
+function play(){
+ if(player.mode==='playing'||player.mode==='stepping'){pause();return;}
+ if(player.mode==='complete')seek(-1);
+ player.mode='playing';
+ if(!player.active)beginEvent(player.position+1);
+ updateUI();cancelFrame();player.frame=requestAnimationFrame(frame);
+}
+function pause(){cancelFrame();player.mode='paused';updateUI();}
+function seek(index){
+ cancelFrame();player.active=null;resetModel();
+ for(let i=0;i<=index;i++)applyEvent(player.scene.events[i]);
+ player.position=index;player.mode=index===player.scene.events.length-1?'complete':index<0?'ready':'paused';
+ drawBoard(index>=0?player.scene.events[index].to:null);updateUI();
+}
+function chooseScene(id){
+ player.scene=scenes.find(s=>s.id===id);
+ host.querySelectorAll('[role=tab]').forEach(b=>{const selected=b.dataset.scene===id;b.setAttribute('aria-selected',String(selected));b.tabIndex=selected?0:-1;});
+ find('lab-title').textContent=player.scene.title;find('lab-question').textContent=player.scene.question;
+ seek(-1);
+}
+const tabs=host.querySelector('.lab-tabs');
+scenes.forEach((s,i)=>{
+ const button=document.createElement('button');button.type='button';button.role='tab';button.dataset.scene=s.id;button.id='lab-tab-'+s.id;button.textContent=s.tab;
+ button.addEventListener('click',()=>chooseScene(s.id));
+ button.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key==='ArrowLeft'){e.preventDefault();const next=(i+(e.key==='ArrowRight'?1:-1)+scenes.length)%scenes.length;chooseScene(scenes[next].id);tabs.children[next].focus();}});
+ tabs.append(button);
+});
+find('lab-play').addEventListener('click',play);
+find('lab-prev').addEventListener('click',()=>seek(player.active&&player.active.phase==='transport'?player.position:player.position-1));
+find('lab-next').addEventListener('click',()=>{
+ if(player.mode==='complete')return;
+ cancelFrame();player.mode='stepping';
+ if(!player.active)beginEvent(player.position+1);
+ updateUI();player.frame=requestAnimationFrame(frame);
+});
+find('lab-reset').addEventListener('click',()=>seek(-1));
+find('lab-speed').addEventListener('change',e=>{player.speed=Number(e.target.value);});
+find('lab-source').addEventListener('click',()=>{
+ if(player.mode==='playing'||player.mode==='stepping')pause();
+ const e=player.active?player.active.event:player.scene.events[player.position];if(e&&e.source)showSource(e.source);
+});
+let expanded=false;
+find('lab-expand').addEventListener('click',()=>{
+ expanded=!expanded;host.classList.toggle('lab-expanded',expanded);document.body.classList.toggle('lab-open',expanded);
+ find('lab-expand').textContent=expanded?'收起演示':'放大演示';
+});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&expanded&&!document.querySelector('dialog[open]')){expanded=false;host.classList.remove('lab-expanded');document.body.classList.remove('lab-open');find('lab-expand').textContent='放大演示';}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&(player.mode==='playing'||player.mode==='stepping'))pause();});
+chooseScene('import');
+})();
+
+
+</script></body></html>
